@@ -17,7 +17,6 @@
 
     <section class="sec first">
         <h2 class="h2">Subs owed</h2>
-        <p class="sub">What’s owed at {{ Money::format($finance->rate) }} a week, after what each person has paid</p>
         @forelse ($owing as $o)
             <div class="owing-row">
                 <a class="nm" style="font-weight: 600" href="{{ route('players.show', [$o['player'], 'from' => 'finance']) }}">{{ $o['player']->name }}</a>
@@ -34,7 +33,6 @@
 
     <section class="sec">
         <h2 class="h2">Income from subs</h2>
-        <p class="sub">Per league night, {{ Money::format($finance->rate) }} per player. Payments cover the oldest unpaid week first. Tap a week to see who’s covered.</p>
         @forelse ($weeks as $w)
             <div class="week-row">
                 <div class="top">
@@ -53,7 +51,6 @@
 
     <section class="sec">
         <h2 class="h2">Expenses</h2>
-        <p class="sub">Money paid out this season</p>
         @forelse ($expenses as $e)
             <div class="line-row expense">
                 <span class="mute">{{ Dates::short($e->spent_on) }}</span>

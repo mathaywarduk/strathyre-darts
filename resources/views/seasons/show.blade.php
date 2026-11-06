@@ -3,7 +3,7 @@
     <div style="padding-top: 8px"><a class="back" href="{{ route('seasons.index') }}">Back to past seasons</a></div>
     <section class="hero" style="padding-top: 16px">
         <h1 class="page-title">Season {{ $season->label }}</h1>
-        <p class="mute">Final table and results. The number is the winner’s checkout.</p>
+        <p class="mute">Final table and results</p>
     </section>
 
     <section class="sec first">
@@ -46,7 +46,11 @@
         }
     @endphp
     @if ($best)
-        <p style="margin: 16px 0 0"><span class="mute">Highest checkout</span> <strong>{{ $best['checkout'] }}</strong> <span class="mute">· {{ implode(', ', $best['names']) }}</span></p>
+        <section class="sec">
+            <div class="mute">Highest checkout</div>
+            <div class="big" style="font-size: 72px; margin-top: 4px">{{ $best['checkout'] }}</div>
+            <div style="margin-top: 6px">{{ implode(', ', $best['names']) }}</div>
+        </section>
     @endif
 
     @foreach (array_reverse($snapshot['weeks']) as $week)
@@ -57,7 +61,7 @@
                 @foreach ($week['results'] as $res)
                     <div class="line">
                         <span><span style="font-weight: 700">{{ $res['winner'] }}</span> <span class="v">beat</span> {{ $res['loser'] }}</span>
-                        @if (isset($res['checkout']))<span style="font-weight: 700" aria-label="Checkout {{ $res['checkout'] }}">{{ $res['checkout'] }}</span>@endif
+                        @if (isset($res['checkout']))<span><span class="mute">Checkout:</span> <strong>{{ $res['checkout'] }}</strong></span>@endif
                     </div>
                 @endforeach
                 @foreach ($week['unplayed'] as $pair)

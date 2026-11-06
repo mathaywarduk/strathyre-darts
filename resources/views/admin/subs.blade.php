@@ -18,7 +18,7 @@
                         $ahead = $finance->creditOf($p->id);
                     @endphp
                     <option value="{{ $p->id }}" @selected($selected === $p->id)>
-                        {{ $p->name }} · {{ $owes > 0 ? 'owes '.Money::format($owes) : ($ahead > 0 ? Money::format($ahead).' ahead' : 'paid up') }}
+                        {{ $p->name }}@if ($owes > 0) · owes {{ Money::format($owes) }}@elseif ($ahead > 0) · {{ Money::format($ahead) }} ahead @endif
                     </option>
                 @endforeach
             </select>

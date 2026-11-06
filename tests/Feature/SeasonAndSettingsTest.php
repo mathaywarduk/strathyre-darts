@@ -123,7 +123,7 @@ class SeasonAndSettingsTest extends TestCase
         Player::first()->update(['name' => 'Renamed R']);
         auth()->logout();
         $this->get('/seasons')->assertSee('Season 2026/27');
-        $this->get(route('seasons.show', $old))->assertOk()->assertSee('Final table')->assertSee('Checkout 121', false)->assertSee('Highest checkout')->assertDontSee('Renamed R');
+        $this->get(route('seasons.show', $old))->assertOk()->assertSee('Final table')->assertSeeInOrder(['Checkout:', '121'])->assertSee('Highest checkout')->assertDontSee('Renamed R');
         $this->get('/')->assertSee('Coming soon')->assertSee('Past seasons');
     }
 

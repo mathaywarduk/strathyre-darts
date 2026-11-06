@@ -61,7 +61,6 @@
 
     <section class="sec">
         <h2 class="h2">Results</h2>
-        <p class="sub">A win shows the checkout.</p>
         @forelse ($results as $f)
             @php
                 $res = $f->result;
@@ -82,14 +81,11 @@
 
     <section class="sec">
         <h2 class="h2">Subs</h2>
-        <p class="sub">{{ Money::format($subs['paid']) }} paid of {{ Money::format($subs['due']) }} due so far</p>
-        @if ($subs['owed'] > 0)
-            <p class="owed-text" style="margin: 0 0 12px; font-weight: 700">Owes {{ Money::format($subs['owed']) }} ({{ Finance::weeksText($subs['weeks']) }})</p>
-        @elseif ($subs['credit'] > 0)
-            <p style="margin: 0 0 12px">All subs paid, and {{ Money::format($subs['credit']) }} ahead.</p>
-        @else
-            <p style="margin: 0 0 12px">All subs paid.</p>
-        @endif
+        <p style="margin: 8px 0 14px; font-variant-numeric: tabular-nums">
+            <span class="mute">Paid:</span> <strong>{{ Money::format($subs['paid']) }}</strong>
+            <span style="display: inline-block; width: 20px"></span>
+            <span class="mute">Owes:</span> <strong @class(['owed-text' => $subs['owed'] > 0])>{{ Money::format($subs['owed']) }}</strong>
+        </p>
         <div class="week-grid">
             @foreach ($subs['cells'] as $cell)
                 <a class="week-btn {{ $cell['paid'] ? 'paid' : '' }}" href="{{ route('finance.week', $cell['night']->week) }}" aria-label="Week {{ $cell['night']->week }}, {{ $cell['paid'] ? 'paid' : 'not paid in full' }}"><small>Week</small>{{ $cell['night']->week }}</a>

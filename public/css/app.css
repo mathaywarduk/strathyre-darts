@@ -163,6 +163,7 @@ body:not(.light) .btn.danger { color: #000; }
 .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
 .card { border: 1px solid var(--line-strong); border-radius: 4px; padding: 16px; }
 .card + .card { margin-top: 16px; }
+.card + .actions { margin-top: 16px; }
 .checks { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px 12px; }
 .checks label { display: flex; align-items: center; gap: 8px; min-height: 36px; }
 .checks input { width: 20px; height: 20px; }

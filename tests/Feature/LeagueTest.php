@@ -235,7 +235,7 @@ class LeagueTest extends TestCase
         auth()->logout();
 
         $this->get('/')->assertSee('Week 2')->assertDontSee('Results pending')
-            ->assertSee('1 of 19 weeks played, 9 catch-ups to play')->assertSee('Checkout 121');
+            ->assertSee('1 of 19 weeks played, 9 catch-ups to play')->assertSeeInOrder(['Checkout:', '121']);
     }
 
     public function test_the_league_is_not_live_until_settings_and_fixtures_exist(): void

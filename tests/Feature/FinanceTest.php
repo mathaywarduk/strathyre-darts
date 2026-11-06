@@ -147,10 +147,15 @@ class FinanceTest extends TestCase
         $this->pay($this->player(), '1', '2026-11-20');
 
         $this->get(route('admin.subs'))->assertOk()
-            ->assertSee('Alice A · owes £3.00')->assertSee('Bob B · owes £4.00')
+            ->assertSee('Alice A · owes £3.00')->assertSee('Bob B · owes £4.00')->assertDontSee('paid up')
             ->assertSee('Recent payments')->assertSee('20 Nov')
             ->assertSee('£1.00');
         $this->get(route('admin.subs', ['player' => $this->player('Bob B')->id]))->assertSee('selected', false);
+
+        // Someone who owes nothing and has paid nothing ahead is just their name
+        $this->travelTo('2026-11-12 09:00');
+        $html = $this->get(route('admin.subs'))->assertDontSee('paid up')->assertDontSee('owes £')->getContent();
+        $this->assertMatchesRegularExpression('/>\s*Bob B\s*<\/option>/', $html);
     }
 
     public function test_finance_pages_are_public(): void
@@ -210,7 +215,7 @@ class FinanceTest extends TestCase
         $this->pay($alice, '3');
         auth()->logout();
 
-        $this->get(route('players.show', $alice))->assertSee('£3.00 paid of £4.00 due so far')->assertSee('Owes £1.00 (week 2)');
+        $this->get(route('players.show', $alice))->assertSeeInOrder(['Paid:', '£3.00', 'Owes:', '£1.00'])->assertDontSee('due so far');
     }
 
     public function test_finance_before_the_league_is_set_up(): void
