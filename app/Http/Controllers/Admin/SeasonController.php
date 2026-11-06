@@ -7,6 +7,7 @@ use App\Models\Season;
 use App\Models\Setting;
 use App\Services\League;
 use App\Services\SeasonManager;
+use App\Support\Money;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,6 +25,22 @@ class SeasonController extends Controller
             'archived' => Season::where('status', 'archived')->orderByDesc('starts_on')->get(),
             'suggested' => ($current?->starts_on ?? CarbonImmutable::parse('2026-11-13'))->addYear()->next('friday')->toDateString(),
         ]);
+    }
+
+    /** Money already in the pot when the season began, e.g. left over from last year. */
+    public function balance(Request $request): RedirectResponse
+    {
+        $current = Season::current();
+        abort_unless($current, 404);
+
+        $data = $request->validate(['balance' => ['required', 'regex:/^-?£?\d+(\.\d{1,2})?$|^£-?\d+(\.\d{1,2})?$/u']], [
+            'balance.regex' => 'Enter the starting balance as money, like 120 or 85.50.',
+            'balance.required' => 'Enter the starting balance, or 0 if there is none.',
+        ]);
+
+        $current->update(['opening_pence' => Money::parseSigned($data['balance'])]);
+
+        return redirect()->route('admin.season.index')->with('status', 'Starting balance saved: '.Money::format($current->opening_pence).'.');
     }
 
     /** Start the first season, or the next one when none is current. */

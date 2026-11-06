@@ -13,13 +13,7 @@
             <select class="field" id="player_id" name="player_id" required>
                 <option value="">Choose a player</option>
                 @foreach ($finance->league->players as $p)
-                    @php
-                        $owes = $finance->owedBy($p->id);
-                        $ahead = $finance->creditOf($p->id);
-                    @endphp
-                    <option value="{{ $p->id }}" @selected($selected === $p->id)>
-                        {{ $p->name }}@if ($owes > 0) · owes {{ Money::format($owes) }}@elseif ($ahead > 0) · {{ Money::format($ahead) }} ahead @endif
-                    </option>
+                    <option value="{{ $p->id }}" @selected($selected === $p->id)>{{ $p->name }}</option>
                 @endforeach
             </select>
         </div>

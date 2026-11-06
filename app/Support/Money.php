@@ -21,6 +21,17 @@ final class Money
         return (int) round(((float) $clean) * 100);
     }
 
+    /** Like parse(), but a balance can be below zero: "-1.50" → -150 */
+    public static function parseSigned(?string $input): ?int
+    {
+        $clean = trim(str_replace(['£', ',', ' '], '', (string) $input));
+        if (! preg_match('/^-?\d+(\.\d{1,2})?$/', $clean)) {
+            return null;
+        }
+
+        return (int) round(((float) $clean) * 100);
+    }
+
     /** For form fields: 250 → "2.50" */
     public static function input(?int $pence): string
     {

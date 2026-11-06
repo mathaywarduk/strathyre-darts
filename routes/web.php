@@ -72,6 +72,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         Route::get('season', [Admin\SeasonController::class, 'index'])->name('season.index');
         Route::post('season', [Admin\SeasonController::class, 'start'])->name('season.start');
+        Route::put('season/balance', [Admin\SeasonController::class, 'balance'])->name('season.balance');
         Route::post('season/reset', [Admin\SeasonController::class, 'reset'])->name('season.reset');
         Route::delete('season/{season}', [Admin\SeasonController::class, 'destroy'])->name('season.destroy');
     });

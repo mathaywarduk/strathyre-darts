@@ -6,7 +6,7 @@
         <div class="mute" style="font-size: 15px">Balance</div>
         <div class="finance-balance">{{ Money::format($finance->balance()) }}</div>
         @if ($finance->opening() !== 0)
-            <p class="mute" style="margin: 8px 0 0">Includes {{ Money::format($finance->opening()) }} carried over from last season</p>
+            <p class="mute" style="margin: 8px 0 0">Includes a starting balance of {{ Money::format($finance->opening()) }}</p>
         @endif
         <div class="stats3 tight">
             <div><div class="stat-n">{{ Money::format($finance->received()) }}</div><div class="mute">Subs received</div></div>

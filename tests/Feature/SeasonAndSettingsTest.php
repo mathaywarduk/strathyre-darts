@@ -135,7 +135,7 @@ class SeasonAndSettingsTest extends TestCase
         $this->post(route('admin.fixtures.save'), ['token' => session('fixture_draft.token')]);
 
         $this->travelTo('2027-11-01');
-        $this->get('/finance')->assertSee('-£1.50')->assertSee('carried over');
+        $this->get('/finance')->assertSee('-£1.50')->assertSee('starting balance');
     }
 
     public function test_a_season_can_be_hard_deleted_with_everything_in_it(): void
@@ -182,5 +182,50 @@ class SeasonAndSettingsTest extends TestCase
             $this->get(route($route))->assertOk();
         }
         $this->get(route('admin.players.edit', Player::first()))->assertOk();
+    }
+
+    public function test_a_starting_balance_can_be_set_and_shows_on_the_finance_page(): void
+    {
+        $season = $this->liveLeague();
+        $this->travelTo('2026-11-14 10:00');
+
+        $this->put(route('admin.season.balance'), ['balance' => '£120.50'])->assertRedirect(route('admin.season.index'))
+            ->assertSessionHas('status', fn ($m) => str_contains($m, '£120.50'));
+        $this->assertSame(12050, $season->fresh()->opening_pence);
+
+        $this->post(route('admin.expenses.store'), ['item' => 'Chalk', 'cost' => '5', 'spent_on' => '2026-11-10']);
+        auth()->logout();
+        $this->get('/finance')->assertSee('£115.50')->assertSee('starting balance of £120.50');
+    }
+
+    public function test_a_starting_balance_can_be_negative_or_zero(): void
+    {
+        $season = $this->liveLeague();
+
+        $this->put(route('admin.season.balance'), ['balance' => '-12.5'])->assertSessionHasNoErrors();
+        $this->assertSame(-1250, $season->fresh()->opening_pence);
+        $this->get(route('admin.season.index'))->assertSee('-12.50');
+
+        $this->put(route('admin.season.balance'), ['balance' => '0'])->assertSessionHasNoErrors();
+        $this->assertSame(0, $season->fresh()->opening_pence);
+    }
+
+    public function test_a_starting_balance_is_validated(): void
+    {
+        $season = $this->liveLeague();
+        $this->put(route('admin.season.balance'), ['balance' => 'lots'])->assertSessionHasErrors('balance');
+        $this->put(route('admin.season.balance'), ['balance' => ''])->assertSessionHasErrors('balance');
+        $this->put(route('admin.season.balance'), ['balance' => '1.234'])->assertSessionHasErrors('balance');
+        $this->assertSame(0, $season->fresh()->opening_pence);
+    }
+
+    public function test_the_balance_carried_into_a_new_season_can_be_overridden(): void
+    {
+        $this->playSomeSeason();
+        $this->post(route('admin.season.reset'), ['starts_on' => '2027-11-12', 'confirm' => 'RESET']);
+        $this->assertSame(-150, Season::current()->opening_pence);
+
+        $this->put(route('admin.season.balance'), ['balance' => '200']);
+        $this->assertSame(20000, Season::current()->opening_pence);
     }
 }

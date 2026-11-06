@@ -147,14 +147,14 @@ class FinanceTest extends TestCase
         $this->pay($this->player(), '1', '2026-11-20');
 
         $this->get(route('admin.subs'))->assertOk()
-            ->assertSee('Alice A · owes £3.00')->assertSee('Bob B · owes £4.00')->assertDontSee('paid up')
+            ->assertSee('£3.00')->assertSee('£4.00')->assertDontSee('paid up')->assertDontSee('· owes')
             ->assertSee('Recent payments')->assertSee('20 Nov')
             ->assertSee('£1.00');
         $this->get(route('admin.subs', ['player' => $this->player('Bob B')->id]))->assertSee('selected', false);
 
-        // Someone who owes nothing and has paid nothing ahead is just their name
-        $this->travelTo('2026-11-12 09:00');
-        $html = $this->get(route('admin.subs'))->assertDontSee('paid up')->assertDontSee('owes £')->getContent();
+        // The dropdown is just names, whatever people owe
+        $html = $this->get(route('admin.subs'))->getContent();
+        $this->assertMatchesRegularExpression('/>\s*Alice A\s*<\/option>/', $html);
         $this->assertMatchesRegularExpression('/>\s*Bob B\s*<\/option>/', $html);
     }
 

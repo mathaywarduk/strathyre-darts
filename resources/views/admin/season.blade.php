@@ -1,4 +1,5 @@
 @use('App\Support\Dates')
+@use('App\Support\Money')
 <x-layouts.admin title="Season">
     <h1 class="h2" style="margin-top: 16px">Season</h1>
 
@@ -10,6 +11,17 @@
                 @if ($league->hasFixtures()) {{ $league->weeksPlayed() }} of {{ $league->totalWeeks() }} weeks played. @else No fixtures yet. @endif
             </p>
         </div>
+
+        <form method="POST" action="{{ route('admin.season.balance') }}" class="card stack" data-save-shortcut>
+            @csrf @method('PUT')
+            <h2 class="h2">Starting balance</h2>
+            <p class="sub" style="margin: 0">Money already in the pot when this season began, for example left over from last year. It’s added to the balance on the Finance page. A new season starts with last season’s closing balance, and you can change it here.</p>
+            <div>
+                <label class="label" for="balance">Amount (£)</label>
+                <input class="field" id="balance" name="balance" inputmode="decimal" value="{{ old('balance', Money::input($current->opening_pence)) }}" required>
+            </div>
+            <button class="btn" type="submit">Save starting balance</button>
+        </form>
 
         <form method="POST" action="{{ route('admin.season.reset') }}" class="card stack">
             @csrf
