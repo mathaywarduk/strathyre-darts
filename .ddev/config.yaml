@@ -1,0 +1,12 @@
+name: strathyredarts
+type: laravel
+docroot: public
+php_version: "8.3"
+webserver_type: nginx-fpm
+xdebug_enabled: false
+database:
+    type: mysql
+    version: "8.0"
+use_dns_when_possible: true
+composer_version: "2"
+corepack_enable: false

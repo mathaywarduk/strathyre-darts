@@ -1,0 +1,79 @@
+<?php
+
+use App\Http\Controllers\Admin;
+use App\Http\Controllers\FinanceController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PlayerController;
+use App\Http\Controllers\SeasonArchiveController;
+use Illuminate\Support\Facades\Route;
+
+/*
+| Public site
+*/
+Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('players/{player}', [PlayerController::class, 'show'])->name('players.show');
+Route::get('seasons', [SeasonArchiveController::class, 'index'])->name('seasons.index');
+Route::get('seasons/{season}', [SeasonArchiveController::class, 'show'])->name('seasons.show');
+
+/*
+| Finance: admin only. A 404 for anyone who isn't logged in, so it doesn't appear to exist.
+*/
+Route::middleware('hidden')->prefix('finance')->name('finance.')->group(function () {
+    Route::get('/', [FinanceController::class, 'index'])->name('index');
+    Route::get('weeks/{week}', [FinanceController::class, 'week'])->whereNumber('week')->name('week');
+    Route::post('weeks/{week}/players/{player}', [FinanceController::class, 'toggle'])->whereNumber('week')->name('toggle');
+});
+
+/*
+| Admin (one login, created with `php artisan darts:admin`)
+*/
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('login', [Admin\AuthController::class, 'create'])->name('login')->middleware('guest');
+    Route::post('login', [Admin\AuthController::class, 'store'])->middleware(['guest', 'throttle:5,1']);
+    Route::post('logout', [Admin\AuthController::class, 'destroy'])->name('logout')->middleware('auth');
+
+    Route::middleware('auth')->group(function () {
+        Route::get('/', [Admin\DashboardController::class, 'index'])->name('dashboard');
+
+        Route::get('players', [Admin\PlayerController::class, 'index'])->name('players.index');
+        Route::post('players', [Admin\PlayerController::class, 'store'])->name('players.store');
+        Route::post('players/import', [Admin\PlayerController::class, 'preview'])->name('players.preview');
+        Route::post('players/import/confirm', [Admin\PlayerController::class, 'confirm'])->name('players.confirm');
+        Route::post('players/import/cancel', [Admin\PlayerController::class, 'cancel'])->name('players.cancel');
+        Route::get('players/{player}', [Admin\PlayerController::class, 'edit'])->name('players.edit');
+        Route::put('players/{player}', [Admin\PlayerController::class, 'update'])->name('players.update');
+        Route::delete('players/{player}', [Admin\PlayerController::class, 'destroy'])->name('players.destroy');
+
+        Route::get('fixtures', [Admin\FixtureController::class, 'index'])->name('fixtures.index');
+        Route::post('fixtures/generate', [Admin\FixtureController::class, 'generate'])->name('fixtures.generate');
+        Route::post('fixtures/manual', [Admin\FixtureController::class, 'manual'])->name('fixtures.manual');
+        Route::post('fixtures/save', [Admin\FixtureController::class, 'save'])->name('fixtures.save');
+        Route::post('fixtures/discard', [Admin\FixtureController::class, 'discard'])->name('fixtures.discard');
+        Route::put('fixtures/nights/{night}', [Admin\FixtureController::class, 'night'])->name('fixtures.night');
+
+        Route::get('results', [Admin\ResultController::class, 'index'])->name('results.index');
+        Route::post('results/preview', [Admin\ResultController::class, 'preview'])->name('results.preview');
+        Route::post('results/save', [Admin\ResultController::class, 'save'])->name('results.save');
+        Route::post('results/back', [Admin\ResultController::class, 'back'])->name('results.back');
+        Route::get('results/{result}/edit', [Admin\ResultController::class, 'edit'])->name('results.edit');
+        Route::put('results/{result}', [Admin\ResultController::class, 'update'])->name('results.update');
+        Route::delete('results/{result}', [Admin\ResultController::class, 'destroy'])->name('results.destroy');
+
+        Route::get('expenses', [Admin\ExpenseController::class, 'index'])->name('expenses.index');
+        Route::post('expenses', [Admin\ExpenseController::class, 'store'])->name('expenses.store');
+        Route::get('expenses/{expense}', [Admin\ExpenseController::class, 'edit'])->name('expenses.edit');
+        Route::put('expenses/{expense}', [Admin\ExpenseController::class, 'update'])->name('expenses.update');
+        Route::delete('expenses/{expense}', [Admin\ExpenseController::class, 'destroy'])->name('expenses.destroy');
+
+        Route::get('subs', [Admin\SubsController::class, 'index'])->name('subs');
+
+        Route::get('settings', [Admin\SettingsController::class, 'edit'])->name('settings.edit');
+        Route::put('settings', [Admin\SettingsController::class, 'update'])->name('settings.update');
+        Route::put('settings/password', [Admin\SettingsController::class, 'password'])->name('settings.password');
+
+        Route::get('season', [Admin\SeasonController::class, 'index'])->name('season.index');
+        Route::post('season', [Admin\SeasonController::class, 'start'])->name('season.start');
+        Route::post('season/reset', [Admin\SeasonController::class, 'reset'])->name('season.reset');
+        Route::delete('season/{season}', [Admin\SeasonController::class, 'destroy'])->name('season.destroy');
+    });
+});

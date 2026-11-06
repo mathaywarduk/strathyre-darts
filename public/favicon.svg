@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="SDL">
+  <rect width="64" height="64" rx="10" fill="#000"/>
+  <g fill="none" stroke="#fff" stroke-width="6">
+    <path d="M21 22Q21 17 15 17Q9 17 9 23.500Q9 29 15 32Q21 35 21 40.500Q21 47 15 47Q9 47 9 42"/>
+    <path d="M28 17H33Q43 17 43 32Q43 47 33 47H28Z" stroke-linejoin="miter"/>
+    <path d="M51 17V47H60"/>
+  </g>
+</svg>
