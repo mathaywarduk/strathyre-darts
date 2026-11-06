@@ -163,7 +163,7 @@ class FinanceTest extends TestCase
             ->assertSee('Alice A (£1.00 paid)', false)->assertSee('£1.00');
         $this->get('/finance/weeks/1')->assertOk()->assertSee('Not paid (19)')->assertDontSee('Record a payment');
         $this->get('/finance/weeks/2')->assertOk()->assertSee('Owes £1.00')->assertSee('part-paid');
-        $this->get('/finance/weeks/3')->assertNotFound(); // not due yet
+        $this->get('/finance/weeks/3')->assertRedirect(route('finance.index')); // not due yet
         $this->get('/')->assertSee('Finance');
     }
 

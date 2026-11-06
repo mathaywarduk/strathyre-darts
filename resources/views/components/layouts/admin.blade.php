@@ -30,16 +30,18 @@
     @auth
         <nav class="admin-nav" aria-label="Admin">
             @foreach ([
-                ['Dashboard', 'admin.dashboard', 'admin.dashboard'],
-                ['Results', 'admin.results.*', 'admin.results.index'],
-                ['Players', 'admin.players.*', 'admin.players.index'],
-                ['Fixtures', 'admin.fixtures.*', 'admin.fixtures.index'],
-                ['Expenses', 'admin.expenses.*', 'admin.expenses.index'],
-                ['Subs', 'admin.subs*', 'admin.subs'],
-                ['Settings', 'admin.settings.*', 'admin.settings.edit'],
-                ['Season', 'admin.season.*', 'admin.season.index'],
-            ] as [$label, $pattern, $route])
-                <a href="{{ route($route) }}" @if (request()->routeIs($pattern)) aria-current="page" @endif>{{ $label }}</a>
+                ['Dashboard', 'admin.dashboard', 'admin.dashboard', true],
+                ['Results', 'admin.results.*', 'admin.results.index', $leagueLive],
+                ['Players', 'admin.players.*', 'admin.players.index', true],
+                ['Fixtures', 'admin.fixtures.*', 'admin.fixtures.index', $hasSeason],
+                ['Expenses', 'admin.expenses.*', 'admin.expenses.index', $hasSeason],
+                ['Subs', 'admin.subs*', 'admin.subs', $leagueLive],
+                ['Settings', 'admin.settings.*', 'admin.settings.edit', true],
+                ['Season', 'admin.season.*', 'admin.season.index', true],
+            ] as [$label, $pattern, $route, $show])
+                @if ($show)
+                    <a href="{{ route($route) }}" @if (request()->routeIs($pattern)) aria-current="page" @endif>{{ $label }}</a>
+                @endif
             @endforeach
         </nav>
     @endauth

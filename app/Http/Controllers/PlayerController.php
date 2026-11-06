@@ -7,17 +7,21 @@ use App\Models\Season;
 use App\Models\Setting;
 use App\Services\Finance;
 use App\Services\League;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class PlayerController extends Controller
 {
-    public function show(Request $request, Player $player): View
+    public function show(Request $request, Player $player): View|RedirectResponse
     {
         $season = Season::current();
-        abort_unless($season, 404);
-        $league = new League($season, Setting::current());
-        abort_unless($league->isLive() && $league->players->has($player->id), 404);
+        $league = $season ? new League($season, Setting::current()) : null;
+
+        // Not set up yet, or not a player in this season: back to the league table
+        if (! $league || ! $league->isLive() || ! $league->players->has($player->id)) {
+            return redirect()->route('home');
+        }
 
         // Where "back" goes: the finance pages, or a week's subs page, for the admin who came from there
         $from = (string) $request->query('from');

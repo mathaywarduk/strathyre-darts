@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Season;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class SeasonArchiveController extends Controller
@@ -14,9 +15,11 @@ class SeasonArchiveController extends Controller
         ]);
     }
 
-    public function show(Season $season): View
+    public function show(Season $season): View|RedirectResponse
     {
-        abort_unless($season->isArchived() && $season->snapshot, 404);
+        if (! $season->isArchived() || ! $season->snapshot) {
+            return redirect()->route('seasons.index');
+        }
 
         return view('seasons.show', ['season' => $season, 'snapshot' => $season->snapshot]);
     }

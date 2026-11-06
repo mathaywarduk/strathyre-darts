@@ -37,13 +37,19 @@
         </div>
     @endif
 
-    <div class="card">
-        <h2 class="h2">Quick links</h2>
-        <ul class="plain">
-            <li class="line"><a class="nm" href="{{ route('admin.results.index') }}">Enter or check results</a></li>
-            <li class="line"><a class="nm" href="{{ route('admin.subs') }}">Record a subs payment, or see who owes</a></li>
-            <li class="line"><a class="nm" href="{{ route('finance.index') }}">Finance</a></li>
-            <li class="line"><a class="nm" href="{{ route('admin.expenses.index') }}">Add an expense</a></li>
-        </ul>
-    </div>
+    @if ($live || $season)
+        <div class="card">
+            <h2 class="h2">Quick links</h2>
+            <ul class="plain">
+                @if ($live)
+                    <li class="line"><a class="nm" href="{{ route('admin.results.index') }}">Enter or check results</a></li>
+                    <li class="line"><a class="nm" href="{{ route('admin.subs') }}">Record a subs payment, or see who owes</a></li>
+                    <li class="line"><a class="nm" href="{{ route('finance.index') }}">Finance</a></li>
+                @endif
+                @if ($season)
+                    <li class="line"><a class="nm" href="{{ route('admin.expenses.index') }}">Add an expense</a></li>
+                @endif
+            </ul>
+        </div>
+    @endif
 </x-layouts.admin>

@@ -7,6 +7,7 @@ use App\Models\Season;
 use App\Models\Setting;
 use App\Services\Finance;
 use App\Services\League;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 /** Public: the league's money, week by week. Recording payments is in the admin. */
@@ -28,11 +29,15 @@ class FinanceController extends Controller
         ]);
     }
 
-    public function week(int $week): View
+    public function week(int $week): View|RedirectResponse
     {
         $finance = $this->finance();
         $night = $finance->league->nights->firstWhere('week', $week);
-        abort_unless($night && $finance->isDue($night), 404);
+
+        // A week that doesn't exist or hasn't come round yet: back to the finance page
+        if (! $night || ! $finance->isDue($night)) {
+            return redirect()->route('finance.index');
+        }
 
         return view('finance.week', [
             'finance' => $finance,

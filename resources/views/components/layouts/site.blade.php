@@ -18,13 +18,20 @@
 <div class="wrap">
     <header class="site-head">
         <a class="brand" href="{{ route('home') }}">Strathyre Darts League</a>
-        <nav class="nav" aria-label="Main">
-            <a href="{{ route('home') }}" @if ($section === 'league') aria-current="page" @endif>League</a>
-            <a href="{{ route('finance.index') }}" @if ($section === 'finance') aria-current="page" @endif>Finance</a>
-            @auth
-                <a href="{{ route('admin.dashboard') }}">Admin</a>
-            @endauth
-        </nav>
+        @php
+            $links = array_filter([
+                ['League', route('home'), 'league'],
+                $leagueLive ? ['Finance', route('finance.index'), 'finance'] : null,
+                auth()->check() ? ['Admin', route('admin.dashboard'), 'admin'] : null,
+            ]);
+        @endphp
+        @if (count($links) > 1)
+            <nav class="nav" aria-label="Main">
+                @foreach ($links as [$label, $url, $key])
+                    <a href="{{ $url }}" @if ($key === $section) aria-current="page" @endif>{{ $label }}</a>
+                @endforeach
+            </nav>
+        @endif
     </header>
 
     @if (session('status'))
