@@ -72,6 +72,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .sec.first { padding-top: 32px; }
 .hero { padding: 24px 0 28px; border-bottom: 1px solid var(--line-strong); }
 .hero-big { font-family: var(--font-cond); font-weight: 700; font-size: 104px; line-height: .85; letter-spacing: -.01em; }
+/* Words with descenders (g, p) need room below, or they run into the line underneath */
+.hero-big.descend { padding-bottom: .18em; }
 .page-title { margin: 0; font-family: var(--font-cond); font-weight: 700; font-size: 64px; line-height: .9; }
 .hero p { margin: 12px 0 0; }
 .hero p.mute { margin-top: 2px; font-size: 15px; }

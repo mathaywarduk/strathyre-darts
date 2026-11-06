@@ -43,7 +43,7 @@ class AccessTest extends TestCase
         $this->submitLines($this->night($season, 1), "{$a} beat {$b} 15");
         auth()->logout();
 
-        $this->get('/')->assertOk()->assertDontSee('Finance')->assertDontSee('>Edit<', false)->assertSee('Week 2');
+        $this->get('/')->assertOk()->assertDontSee('Finance')->assertDontSee('aria-label="Main"', false)->assertDontSee('>Edit<', false)->assertSee('Week 2');
 
         $this->actingAs($this->admin())->get('/')->assertSee('Finance')->assertSee('>Edit<', false);
         $this->get('/finance')->assertOk()->assertSee('Subs received');

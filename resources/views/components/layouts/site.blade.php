@@ -18,13 +18,13 @@
 <div class="wrap">
     <header class="site-head">
         <a class="brand" href="{{ route('home') }}">Strathyre Darts League</a>
-        <nav class="nav" aria-label="Main">
-            <a href="{{ route('home') }}" @if ($section === 'league') aria-current="page" @endif>League</a>
-            @auth
+        @auth
+            <nav class="nav" aria-label="Main">
+                <a href="{{ route('home') }}" @if ($section === 'league') aria-current="page" @endif>League</a>
                 <a href="{{ route('finance.index') }}" @if ($section === 'finance') aria-current="page" @endif>Finance</a>
                 <a href="{{ route('admin.dashboard') }}">Admin</a>
-            @endauth
-        </nav>
+            </nav>
+        @endauth
     </header>
 
     @if (session('status'))

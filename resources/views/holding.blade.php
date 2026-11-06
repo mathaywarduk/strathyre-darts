@@ -1,6 +1,6 @@
 <x-layouts.site title="Coming soon">
     <section class="hero">
-        <div class="hero-big">Coming soon</div>
+        <div class="hero-big descend">Coming soon</div>
         <p>The league isn’t open yet. Check back soon for the table, fixtures and results.</p>
     </section>
     @auth

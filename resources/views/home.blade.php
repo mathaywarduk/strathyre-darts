@@ -14,7 +14,7 @@
                 @endif
             </p>
         @else
-            <div class="hero-big">Season complete</div>
+            <div class="hero-big descend">Season complete</div>
         @endif
         <p class="mute">{{ $progress }}</p>
     </section>
