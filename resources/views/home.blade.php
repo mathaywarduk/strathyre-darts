@@ -1,6 +1,5 @@
 @use('App\Support\Dates')
 @php
-    $signed = fn ($n) => ($n > 0 ? '+' : '').$n;
     $catchText = $catchUps->count() === 0 ? 'no catch-ups to play' : $catchUps->count().' '.\Illuminate\Support\Str::plural('catch-up', $catchUps->count()).' to play';
     $progress = $league->weeksPlayed().' of '.$league->totalWeeks().' weeks played, '.$catchText;
 @endphp
@@ -28,7 +27,6 @@
                         <th scope="col" style="width: 28px">Pos</th>
                         <th scope="col" class="l">Name</th>
                         <th scope="col"><abbr title="Matches played">P</abbr></th>
-                        <th scope="col"><abbr title="Score difference">+/-</abbr></th>
                         <th scope="col">Pts</th>
                     </tr>
                 </thead>
@@ -40,7 +38,7 @@
                             $isM = $leaders['M'] === $id;
                         @endphp
                         <tr @class(['lead-w' => $isW, 'lead-m' => $isM])>
-                            <td style="color: var(--mute)">{{ $r['pos'] }}</td>
+                            <td style="color: var(--mute)">{{ $r['pos'] }}{{ $r['tied'] ? '=' : '' }}</td>
                             <td class="l">
                                 <div class="namecell">
                                     <a class="nm" href="{{ route('players.show', $r['player']) }}">{{ $r['player']->name }}</a>
@@ -49,14 +47,22 @@
                                 </div>
                             </td>
                             <td>{{ $r['played'] }}</td>
-                            <td>{{ $signed($r['diff']) }}</td>
                             <td style="font-weight: 700">{{ $r['pts'] }}</td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
         </div>
-        <p class="mute" style="margin: 12px 0 0">Tap a name to see that player’s matches.</p>
+        @if ($bestCheckout)
+            <p style="margin: 16px 0 0">
+                <span class="mute">Highest checkout</span>
+                <strong>{{ $bestCheckout['checkout'] }}</strong>
+                @foreach ($bestCheckout['fixtures'] as $f)
+                    <span class="mute">·</span> <a href="{{ route('players.show', $f->result->winner_id) }}">{{ $league->name($f->result->winner_id) }}</a> <span class="mute">(week {{ $f->night->week }})</span>
+                @endforeach
+            </p>
+        @endif
+        <p class="mute" style="margin: 12px 0 0">Tap a name to see that player’s matches.@if ($league->isComplete() && $table->contains('tied', true)) Players on a shared position are level after head-to-head and will play off.@endif</p>
     </section>
 
     @if ($night)
@@ -78,7 +84,7 @@
     <section class="sec">
         <h2 class="h2">Last week’s results</h2>
         @if ($last)
-            <p class="sub">Week {{ $last->week }}, {{ Dates::long($last->date) }}</p>
+            <p class="sub">Week {{ $last->week }}, {{ Dates::long($last->date) }}. The number is the winner’s checkout.</p>
             @forelse ($lastResults as $f)
                 @php($res = $f->result)
                 <div class="line">
@@ -90,7 +96,7 @@
                         @endif
                     </span>
                     <span class="right">
-                        <span style="font-weight: 700">+{{ $res->remaining }}</span>
+                        <span style="font-weight: 700" aria-label="Checkout {{ $res->checkout }}">{{ $res->checkout }}</span>
                         @auth
                             <a class="ed" href="{{ route('admin.results.edit', [$res, 'back' => request()->getRequestUri()]) }}" aria-label="Edit result: {{ $league->name($res->winner_id) }} v {{ $league->name($res->loserId()) }}">Edit</a>
                         @endauth

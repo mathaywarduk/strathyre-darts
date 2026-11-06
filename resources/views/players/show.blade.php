@@ -3,7 +3,6 @@
 @use('App\Support\Money')
 @php
     $id = $player->id;
-    $signed = fn ($n) => ($n > 0 ? '+' : '').$n;
     $isW = $leaders['W'] === $id;
     $isM = $leaders['M'] === $id;
     $accent = $isW ? 'var(--women)' : ($isM ? 'var(--men)' : 'var(--fg)');
@@ -20,9 +19,9 @@
 
     <section style="padding-top: 24px">
         <div class="stats3">
-            <div><div class="big" style="font-size: 44px">{{ Dates::ordinal($row['pos']) }}</div><div class="mute">League position</div></div>
+            <div><div class="big" style="font-size: 44px">{{ Dates::ordinal($row['pos']) }}{{ $row['tied'] ? '=' : '' }}</div><div class="mute">League position</div></div>
             <div><div class="big" style="font-size: 44px">{{ $row['pts'] }}</div><div class="mute">Points</div></div>
-            <div><div class="big" style="font-size: 44px">{{ $signed($row['diff']) }}</div><div class="mute">Score difference</div></div>
+            <div><div class="big" style="font-size: 44px">{{ $highestCheckout ?? '–' }}</div><div class="mute">Highest checkout</div></div>
             <div><div class="big" style="font-size: 32px">{{ $row['played'] }}</div><div class="mute">Played</div></div>
             <div><div class="big" style="font-size: 32px">{{ $row['won'] }}</div><div class="mute">Won</div></div>
             <div><div class="big" style="font-size: 32px">{{ $row['lost'] }}</div><div class="mute">Lost</div></div>
@@ -62,6 +61,7 @@
 
     <section class="sec">
         <h2 class="h2">Results</h2>
+        <p class="sub">A win shows the checkout.</p>
         @forelse ($results as $f)
             @php
                 $res = $f->result;
@@ -70,7 +70,7 @@
             <div class="line-row four">
                 <span class="mute">Week {{ $f->night->week }}</span>
                 <span><span class="v">v</span> {{ $opp($f) }}</span>
-                <span class="{{ $won ? 'res-w' : 'res-l' }}">{{ $won ? 'W (+'.$res->remaining.')' : 'L (-'.$res->remaining.')' }}</span>
+                <span class="{{ $won ? 'res-w' : 'res-l' }}">{{ $won ? 'W ('.$res->checkout.')' : 'L' }}</span>
                 @auth
                     <a class="ed" href="{{ route('admin.results.edit', [$res, 'back' => request()->getRequestUri()]) }}" aria-label="Edit result: week {{ $f->night->week }} v {{ $opp($f) }}">Edit</a>
                 @endauth
@@ -80,20 +80,20 @@
         @endforelse
     </section>
 
-    @if ($subs)
-        <section class="sec">
-            <h2 class="h2">Subs</h2>
-            <p class="sub">{{ Money::format($subs['paid']) }} paid of {{ Money::format($subs['due']) }} due so far</p>
-            @if ($subs['weeks'])
-                <p class="owed-text" style="margin: 0 0 12px; font-weight: 700">Owes {{ Money::format($subs['owed']) }} ({{ Finance::weeksText($subs['weeks']) }})</p>
-            @else
-                <p style="margin: 0 0 12px">All subs paid.</p>
-            @endif
-            <div class="week-grid">
-                @foreach ($subs['cells'] as $cell)
-                    <a class="week-btn {{ $cell['paid'] ? 'paid' : '' }}" href="{{ route('finance.week', $cell['night']->week) }}" aria-label="Week {{ $cell['night']->week }}, {{ $cell['paid'] ? 'paid' : 'unpaid' }}"><small>Week</small>{{ $cell['night']->week }}</a>
-                @endforeach
-            </div>
-        </section>
-    @endif
+    <section class="sec">
+        <h2 class="h2">Subs</h2>
+        <p class="sub">{{ Money::format($subs['paid']) }} paid of {{ Money::format($subs['due']) }} due so far</p>
+        @if ($subs['owed'] > 0)
+            <p class="owed-text" style="margin: 0 0 12px; font-weight: 700">Owes {{ Money::format($subs['owed']) }} ({{ Finance::weeksText($subs['weeks']) }})</p>
+        @elseif ($subs['credit'] > 0)
+            <p style="margin: 0 0 12px">All subs paid, and {{ Money::format($subs['credit']) }} ahead.</p>
+        @else
+            <p style="margin: 0 0 12px">All subs paid.</p>
+        @endif
+        <div class="week-grid">
+            @foreach ($subs['cells'] as $cell)
+                <a class="week-btn {{ $cell['paid'] ? 'paid' : '' }}" href="{{ route('finance.week', $cell['night']->week) }}" aria-label="Week {{ $cell['night']->week }}, {{ $cell['paid'] ? 'paid' : 'not paid in full' }}"><small>Week</small>{{ $cell['night']->week }}</a>
+            @endforeach
+        </div>
+    </section>
 </x-layouts.site>

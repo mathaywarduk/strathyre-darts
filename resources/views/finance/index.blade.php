@@ -1,7 +1,7 @@
 @use('App\Support\Dates')
 @use('App\Support\Money')
 @use('App\Services\Finance')
-<x-layouts.site title="Finance" theme="light" section="finance">
+<x-layouts.site title="Finance" section="finance">
     <section class="hero">
         <div class="mute" style="font-size: 15px">Balance</div>
         <div class="finance-balance">{{ Money::format($finance->balance()) }}</div>
@@ -17,7 +17,7 @@
 
     <section class="sec first">
         <h2 class="h2">Subs owed</h2>
-        <p class="sub">Unpaid subs at {{ Money::format($finance->rate) }} a week</p>
+        <p class="sub">What’s owed at {{ Money::format($finance->rate) }} a week, after what each person has paid</p>
         @forelse ($owing as $o)
             <div class="owing-row">
                 <a class="nm" style="font-weight: 600" href="{{ route('players.show', [$o['player'], 'from' => 'finance']) }}">{{ $o['player']->name }}</a>
@@ -27,24 +27,23 @@
         @empty
             <p style="margin: 8px 0 0">Nobody owes anything.</p>
         @endforelse
+        @auth
+            <p class="mute"><a href="{{ route('admin.subs') }}">Record a payment</a></p>
+        @endauth
     </section>
 
     <section class="sec">
         <h2 class="h2">Income from subs</h2>
-        <p class="sub">Per league night, {{ Money::format($finance->rate) }} per player. Tap a week to see who’s paid, or to record payments.</p>
+        <p class="sub">Per league night, {{ Money::format($finance->rate) }} per player. Payments cover the oldest unpaid week first. Tap a week to see who’s covered.</p>
         @forelse ($weeks as $w)
             <div class="week-row">
                 <div class="top">
                     <span><a class="nm" style="font-weight: 600" href="{{ route('finance.week', $w['night']->week) }}">Week {{ $w['night']->week }}</a> <span class="mute">{{ Dates::short($w['night']->date) }}</span></span>
                     <span style="font-weight: 600">{{ Money::format($w['received']) }}</span>
                 </div>
-                @if ($w['upcoming'])
-                    <div class="mid mute"><span>{{ $w['paid']->count() ? $w['paid']->count().' paid in advance' : 'Not due yet' }}</span><span>Due {{ Dates::long($w['night']->date) }}</span></div>
-                @else
-                    <div class="mid mute"><span>{{ $w['paid']->count() }} of {{ $w['paid']->count() + $w['unpaid']->count() }} paid</span><span>of {{ Money::format($w['expected']) }}</span></div>
-                @endif
-                @if (! $w['upcoming'] && $w['unpaid']->isNotEmpty())
-                    <div class="missed">Missed: {{ $w['unpaid']->pluck('name')->implode(', ') }}</div>
+                <div class="mid mute"><span>{{ $w['paid']->count() }} of {{ $w['paid']->count() + $w['unpaid']->count() }} paid</span><span>of {{ Money::format($w['expected']) }}</span></div>
+                @if ($w['unpaid']->isNotEmpty())
+                    <div class="missed">Missed: {{ $w['unpaid']->map(fn ($p) => $p->name.($w['covered'][$p->id] > 0 ? ' ('.Money::format($w['covered'][$p->id]).' paid)' : ''))->implode(', ') }}</div>
                 @endif
             </div>
         @empty
@@ -64,6 +63,8 @@
         @empty
             <p class="sub">No expenses yet.</p>
         @endforelse
-        <p class="mute"><a href="{{ route('admin.expenses.index') }}">Add or edit expenses</a></p>
+        @auth
+            <p class="mute"><a href="{{ route('admin.expenses.index') }}">Add or edit expenses</a></p>
+        @endauth
     </section>
 </x-layouts.site>

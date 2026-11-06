@@ -19,18 +19,21 @@ class SettingsController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'win_points' => ['required', 'integer', 'between:0,99'],
-            'loss_points' => ['required', 'integer', 'between:0,99'],
-            'subs' => ['required', 'regex:/^£?\d+(\.\d{1,2})?$/u'],
+            'win_points' => ['nullable', 'integer', 'between:0,99'],
+            'loss_points' => ['nullable', 'integer', 'between:0,99'],
+            'subs' => ['nullable', 'regex:/^£?\d+(\.\d{1,2})?$/u'],
         ], ['subs.regex' => 'Enter the subs as an amount, like 2 or 2.50.']);
 
-        Setting::current()->update([
-            'win_points' => $data['win_points'],
-            'loss_points' => $data['loss_points'],
-            'subs_pence' => Money::parse($data['subs']),
+        $settings = Setting::current();
+        $settings->update([
+            'win_points' => $data['win_points'] ?? null,
+            'loss_points' => $data['loss_points'] ?? null,
+            'subs_pence' => Money::parse($data['subs'] ?? null),
         ]);
 
-        return redirect()->route('admin.settings.edit')->with('status', 'Settings saved.');
+        return redirect()->route('admin.settings.edit')->with('status', $settings->isComplete()
+            ? 'Settings saved.'
+            : 'Settings saved. The public site shows “Coming soon” until points for a win and a loss and the subs amount are all set.');
     }
 
     public function password(Request $request): RedirectResponse

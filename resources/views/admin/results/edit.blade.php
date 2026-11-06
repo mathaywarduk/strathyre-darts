@@ -19,8 +19,9 @@
             </select>
         </div>
         <div>
-            <label class="label" for="remaining">Points the loser had left</label>
-            <input class="field" id="remaining" name="remaining" type="number" min="1" max="{{ config('league.max_remaining') }}" inputmode="numeric" value="{{ old('remaining', $result->remaining) }}" required>
+            <label class="label" for="checkout">Winner’s checkout</label>
+            <input class="field" id="checkout" name="checkout" type="number" min="{{ config('league.min_checkout') }}" max="{{ config('league.max_checkout') }}" inputmode="numeric" value="{{ old('checkout', $result->checkout) }}" required>
+            <p class="hint">The score they finished from, with three darts to go.</p>
         </div>
         <button class="btn" type="submit">Save</button>
     </form>

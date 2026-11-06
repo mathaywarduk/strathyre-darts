@@ -2,7 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\Fixture;
 use App\Models\Player;
+use App\Models\Result;
+use App\Models\Season;
 use App\Models\Setting;
 use App\Services\League;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -13,43 +16,155 @@ class LeagueTest extends TestCase
 {
     use BuildsLeague, RefreshDatabase;
 
-    public function test_score_difference_adds_the_points_left_for_a_win_and_subtracts_them_for_a_loss(): void
+    /** Records a result straight into the database: $winner beat $loser */
+    private function win(Season $season, string $winner, string $loser, int $checkout = 50): void
+    {
+        $w = Player::where('name', $winner)->firstOrFail();
+        $l = Player::where('name', $loser)->firstOrFail();
+        $fixture = Fixture::where('season_id', $season->id)->where('pair_key', Fixture::pairKey($w->id, $l->id))->firstOrFail();
+        Result::create(['fixture_id' => $fixture->id, 'winner_id' => $w->id, 'checkout' => $checkout]);
+    }
+
+    private function names(Season $season): array
+    {
+        return (new League($season, Setting::current()))->table()->map(fn ($r) => $r['player']->name)->values()->all();
+    }
+
+    public function test_points_and_matches_played_are_counted(): void
     {
         $season = $this->liveLeague();
         [$f, $a, $b] = $this->firstMatch($this->night($season, 1));
-        $this->submitLines($this->night($season, 1), "{$a} beat {$b} 15");
+        $this->submitLines($this->night($season, 1), "{$a} beat {$b} 121");
 
         $league = new League($season, Setting::current());
-        $this->assertSame(15, $league->row($f->player1_id)['diff']);
-        $this->assertSame(-15, $league->row($f->player2_id)['diff']);
-        $this->assertSame(2, $league->row($f->player1_id)['pts']);
-        $this->assertSame(1, $league->row($f->player2_id)['pts']);
-        $this->assertSame(1, $league->row($f->player2_id)['played']);
+        $this->assertSame([2, 1, 1, 1], [$league->row($f->player1_id)['pts'], $league->row($f->player2_id)['pts'], $league->row($f->player1_id)['played'], $league->row($f->player2_id)['played']]);
+        $this->assertSame(121, $league->highestCheckout($f->player1_id));
+        $this->assertNull($league->highestCheckout($f->player2_id), 'a loser has no checkout');
     }
 
-    public function test_table_sorts_by_points_then_difference_then_name(): void
+    public function test_highest_checkout_is_the_best_of_a_players_wins(): void
     {
         $season = $this->liveLeague();
-        $fixtures = $season->fixtures()->where('league_night_id', $this->night($season, 1)->id)->orderBy('id')->get();
-        $names = fn ($f) => [Player::find($f->player1_id)->name, Player::find($f->player2_id)->name];
+        $this->win($season, 'Tess T', 'Alice A', 60);
+        $this->win($season, 'Tess T', 'Bob B', 164);
+        $this->win($season, 'Tess T', 'Cara C', 32);
 
-        // Two winners on equal points: the bigger difference is higher
-        [$w1, $l1] = $names($fixtures[0]);
-        [$w2, $l2] = $names($fixtures[1]);
-        $this->submitLines($this->night($season, 1), "{$w1} beat {$l1} 20\n{$w2} beat {$l2} 90");
+        $league = new League($season, Setting::current());
+        $this->assertSame(164, $league->highestCheckout(Player::where('name', 'Tess T')->value('id')));
+    }
 
-        $table = (new League($season, Setting::current()))->table()->values();
-        $this->assertSame($w2, $table[0]['player']->name);
-        $this->assertSame($w1, $table[1]['player']->name);
-        // On the same points (the losers, 1 point) the bigger loss is lower; beyond that, alphabetical
-        $this->assertSame(1, $table[2]['pts']);
-        $this->assertSame($l1, $table[2]['player']->name); // -20 beats -90
-        $this->assertSame($l2, $table[3]['player']->name);
-        // Everyone else is on 0 points, alphabetical
-        $zeros = $table->filter(fn ($r) => $r['pts'] === 0)->pluck('player.name')->all();
-        $sorted = $zeros;
-        usort($sorted, 'strcasecmp');
-        $this->assertSame($sorted, $zeros);
+    public function test_the_table_has_no_score_difference_and_ranks_by_points(): void
+    {
+        $season = $this->liveLeague();
+        $this->win($season, 'Tess T', 'Alice A');
+        $this->win($season, 'Tess T', 'Bob B');
+
+        $names = $this->names($season);
+        $this->assertSame('Tess T', $names[0]);
+        $this->get('/')->assertDontSee('+/-', false)->assertSee('Pts');
+    }
+
+    public function test_players_level_on_points_are_split_by_who_won_head_to_head(): void
+    {
+        $season = $this->liveLeague();
+        // Tess and Alice both end on 3 points (a win and a loss). Tess beat Alice, though Alice is first alphabetically.
+        $this->win($season, 'Tess T', 'Alice A');
+        $this->win($season, 'Bob B', 'Tess T');
+        $this->win($season, 'Alice A', 'Cara C');
+
+        $names = $this->names($season);
+        $this->assertLessThan(array_search('Alice A', $names), array_search('Tess T', $names));
+    }
+
+    public function test_level_players_who_have_not_met_go_alphabetically(): void
+    {
+        $season = $this->liveLeague();
+        $this->win($season, 'Tess T', 'Dan D');
+        $this->win($season, 'Bob B', 'Eve E');
+
+        $names = $this->names($season);
+        $this->assertSame(['Bob B', 'Tess T'], array_slice($names, 0, 2), 'level on points, never played each other');
+    }
+
+    public function test_three_level_players_are_ordered_by_their_wins_against_each_other(): void
+    {
+        $season = $this->liveLeague();
+        Setting::current()->update(['loss_points' => 0]); // so only wins count
+        // Tess beat Sam and Rae; Sam beat Rae. Then each gets one more win elsewhere so all three have 4 points.
+        $this->win($season, 'Tess T', 'Sam S');
+        $this->win($season, 'Tess T', 'Rae R');
+        $this->win($season, 'Sam S', 'Rae R');
+        $this->win($season, 'Sam S', 'Alice A');
+        $this->win($season, 'Rae R', 'Bob B');
+        $this->win($season, 'Rae R', 'Cara C');
+
+        $names = $this->names($season);
+        $this->assertSame(['Tess T', 'Sam S', 'Rae R'], array_slice($names, 0, 3), 'Rae R would be first alphabetically');
+    }
+
+    public function test_a_circle_of_wins_is_alphabetical_during_the_season_and_a_tie_at_the_end(): void
+    {
+        $season = $this->liveLeague(5);
+        Setting::current()->update(['loss_points' => 0]);
+        $this->win($season, 'Alice A', 'Bob B');
+        $this->win($season, 'Bob B', 'Cara C');
+        $this->win($season, 'Cara C', 'Alice A');
+
+        $league = new League($season, Setting::current());
+        $this->assertFalse($league->isComplete());
+        $this->assertSame(['Alice A', 'Bob B', 'Cara C'], array_slice($this->names($season), 0, 3));
+        $this->assertSame([1, 2, 3], $league->table()->take(3)->pluck('pos')->values()->all());
+        $this->assertFalse($league->table()->first()['tied']);
+    }
+
+    public function test_players_who_cannot_be_split_share_a_position_once_every_match_is_played(): void
+    {
+        $season = $this->liveLeague(3);
+        $this->win($season, 'Alice A', 'Bob B');
+        $this->win($season, 'Bob B', 'Cara C');
+        $this->win($season, 'Cara C', 'Alice A');
+
+        $league = new League($season, Setting::current());
+        $this->assertTrue($league->isComplete());
+        $this->assertSame([1, 1, 1], $league->table()->pluck('pos')->values()->all());
+        $this->assertTrue($league->table()->every(fn ($r) => $r['tied']));
+        $this->get('/')->assertSee('1=')->assertSee('will play off');
+    }
+
+    public function test_head_to_head_settles_pairs_even_when_the_season_is_complete(): void
+    {
+        $season = $this->liveLeague(4);
+        // Alice and Bob finish level on 5 points, Cara and Dan on 4. Bob beat Alice and Dan beat Cara,
+        // so each pair goes the opposite way to alphabetical, and nothing is a tie.
+        $this->win($season, 'Bob B', 'Alice A');
+        $this->win($season, 'Bob B', 'Dan D');
+        $this->win($season, 'Cara C', 'Bob B');
+        $this->win($season, 'Alice A', 'Cara C');
+        $this->win($season, 'Alice A', 'Dan D');
+        $this->win($season, 'Dan D', 'Cara C');
+
+        $league = new League($season, Setting::current());
+        $this->assertTrue($league->isComplete());
+        $this->assertSame(['Bob B', 'Alice A', 'Dan D', 'Cara C'], $this->names($season));
+        $this->assertSame([1, 2, 3, 4], $league->table()->pluck('pos')->values()->all());
+        $this->assertFalse($league->table()->contains('tied', true));
+    }
+
+    public function test_the_league_shows_its_highest_checkout(): void
+    {
+        $season = $this->liveLeague();
+        $this->get('/')->assertDontSee('Highest checkout');
+
+        $this->win($season, 'Tess T', 'Alice A', 60);
+        $this->win($season, 'Bob B', 'Cara C', 164);
+        $this->get('/')->assertSee('Highest checkout')->assertSee('164')->assertSee('Bob B')->assertDontSee('(week 1)Tess', false);
+
+        $best = (new League($season, Setting::current()))->bestCheckout();
+        $this->assertSame(164, $best['checkout']);
+        $this->assertCount(1, $best['fixtures']);
+
+        $this->win($season, 'Dan D', 'Eve E', 164); // level: both are shown
+        $this->assertCount(2, (new League($season, Setting::current()))->bestCheckout()['fixtures']);
     }
 
     public function test_leaders_are_the_top_woman_and_top_man_once_they_have_played(): void
@@ -59,7 +174,7 @@ class LeagueTest extends TestCase
         $this->assertSame(['W' => null, 'M' => null], $league->leaders(), 'nobody leads before a match is played');
 
         [$f, $a, $b] = $this->firstMatch($this->night($season, 1));
-        $this->submitLines($this->night($season, 1), "{$a} beat {$b} 10");
+        $this->submitLines($this->night($season, 1), "{$a} beat {$b} 40");
         $leaders = (new League($season, Setting::current()))->leaders();
 
         $winner = Player::find($f->player1_id);
@@ -71,7 +186,7 @@ class LeagueTest extends TestCase
         $season = $this->liveLeague();
         $night = $this->night($season, 1);
         [$f, $a, $b] = $this->firstMatch($night);
-        $this->submitLines($night, "{$a} beat {$b} 15");
+        $this->submitLines($night, "{$a} beat {$b} 121");
 
         $league = new League($season, Setting::current());
         $this->assertCount(9, $league->catchUps());
@@ -116,11 +231,11 @@ class LeagueTest extends TestCase
             ->assertSee('Results pending')->assertSee('0 of 19 weeks played, no catch-ups to play');
 
         [$f, $a, $b] = $this->firstMatch($this->night($season, 1));
-        $this->submitLines($this->night($season, 1), "{$a} beat {$b} 15");
+        $this->submitLines($this->night($season, 1), "{$a} beat {$b} 121");
         auth()->logout();
 
         $this->get('/')->assertSee('Week 2')->assertDontSee('Results pending')
-            ->assertSee('1 of 19 weeks played, 9 catch-ups to play')->assertSee('+15');
+            ->assertSee('1 of 19 weeks played, 9 catch-ups to play')->assertSee('Checkout 121');
     }
 
     public function test_the_league_is_not_live_until_settings_and_fixtures_exist(): void
@@ -137,12 +252,12 @@ class LeagueTest extends TestCase
     {
         $season = $this->liveLeague();
         [$f, $a, $b] = $this->firstMatch($this->night($season, 1));
-        $this->submitLines($this->night($season, 1), "{$a} beat {$b} 15");
+        $this->submitLines($this->night($season, 1), "{$a} beat {$b} 121");
 
         auth()->logout();
         $this->get(route('players.show', $f->player1_id))->assertOk()
-            ->assertSee('Next match')->assertSee('W (+15)')->assertDontSee('Subs');
-        $this->get(route('players.show', $f->player2_id))->assertSee('L (-15)');
+            ->assertSee('Next match')->assertSee('W (121)')->assertSee('Highest checkout')->assertSee('Subs');
+        $this->get(route('players.show', $f->player2_id))->assertSee('>L<', false);
 
         // Someone whose week 1 match wasn't played has a catch-up panel
         $other = $season->fixtures()->where('league_night_id', $this->night($season, 1)->id)->where('id', '!=', $f->id)->first();

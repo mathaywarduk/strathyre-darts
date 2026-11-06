@@ -18,12 +18,21 @@ class AccessTest extends TestCase
         $this->post('/admin/season/reset', [])->assertRedirect('/admin/login');
     }
 
-    public function test_finance_does_not_exist_for_guests(): void
+    public function test_finance_is_public_and_the_nav_shows_it_to_everyone(): void
     {
         $this->liveLeague();
-        $this->get('/finance')->assertNotFound();
-        $this->get('/finance/weeks/1')->assertNotFound();
-        $this->post('/finance/weeks/1/players/1')->assertNotFound();
+        $this->travelTo('2026-11-14 10:00');
+
+        $this->get('/finance')->assertOk();
+        $this->get('/finance/weeks/1')->assertOk();
+        $this->get('/')->assertSee('aria-label="Main"', false)->assertSee('Finance')->assertDontSee('>Admin<', false);
+    }
+
+    public function test_recording_subs_is_admin_only(): void
+    {
+        $this->liveLeague();
+        $this->post('/admin/subs', ['player_id' => 1, 'amount' => '2', 'paid_on' => '2026-11-14'])->assertRedirect('/admin/login');
+        $this->delete('/admin/subs/1')->assertRedirect('/admin/login');
     }
 
     public function test_login_uses_a_username(): void
@@ -35,17 +44,16 @@ class AccessTest extends TestCase
         $this->assertAuthenticatedAs($admin);
     }
 
-    public function test_finance_nav_and_edit_buttons_only_show_when_logged_in(): void
+    public function test_edit_buttons_and_the_admin_link_only_show_when_logged_in(): void
     {
         $season = $this->liveLeague();
         $this->travelTo('2026-11-14 10:00');
         [$f, $a, $b] = $this->firstMatch($this->night($season, 1));
-        $this->submitLines($this->night($season, 1), "{$a} beat {$b} 15");
+        $this->submitLines($this->night($season, 1), "{$a} beat {$b} 121");
         auth()->logout();
 
-        $this->get('/')->assertOk()->assertDontSee('Finance')->assertDontSee('aria-label="Main"', false)->assertDontSee('>Edit<', false)->assertSee('Week 2');
+        $this->get('/')->assertOk()->assertDontSee('>Edit<', false)->assertDontSee('>Admin<', false)->assertSee('Week 2');
 
-        $this->actingAs($this->admin())->get('/')->assertSee('Finance')->assertSee('>Edit<', false);
-        $this->get('/finance')->assertOk()->assertSee('Subs received');
+        $this->actingAs($this->admin())->get('/')->assertSee('>Edit<', false)->assertSee('>Admin<', false);
     }
 }

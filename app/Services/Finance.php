@@ -8,8 +8,13 @@ use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 
 /**
- * Subs and money for a season. Subs are due from each league night's date,
- * for every player, whether or not their match was played.
+ * Subs and money for a season.
+ *
+ * Players hand over money in any amounts. What they owe is simply what's due so
+ * far (a night's subs for every league night whose date has arrived, played or
+ * not) minus everything they've paid. To show it week by week, money is matched
+ * to league nights oldest first: £5 at £2 a night covers two weeks and half of a
+ * third.
  */
 final class Finance
 {
@@ -17,10 +22,10 @@ final class Finance
 
     public readonly CarbonInterface $today;
 
-    /** @var array<string, true> "nightId:playerId" */
+    /** @var array<int, int> player id => total paid, in pence */
     private array $paid = [];
 
-    private int $paymentCount;
+    private int $received;
 
     private int $expensePence;
 
@@ -30,10 +35,10 @@ final class Finance
         $this->rate = $league->settings->subs_pence ?? 0;
 
         $payments = $league->season->payments()->get();
-        foreach ($payments as $p) {
-            $this->paid[$p->league_night_id.':'.$p->player_id] = true;
+        foreach ($payments as $payment) {
+            $this->paid[$payment->player_id] = ($this->paid[$payment->player_id] ?? 0) + $payment->amount_pence;
         }
-        $this->paymentCount = $payments->count();
+        $this->received = (int) $payments->sum('amount_pence');
         $this->expensePence = (int) $league->season->expenses()->sum('cost_pence');
     }
 
@@ -48,35 +53,65 @@ final class Finance
         return $night->date->lte($this->today);
     }
 
-    public function isPaid(LeagueNight $night, Player|int $player): bool
+    public function paidBy(int $playerId): int
     {
-        return isset($this->paid[$night->id.':'.(is_int($player) ? $player : $player->id)]);
+        return $this->paid[$playerId] ?? 0;
     }
 
-    /** @return list<int> week numbers a player hasn't paid for, among nights due so far */
+    /** What every player owes in total so far */
+    public function due(): int
+    {
+        return $this->dueNights()->count() * $this->rate;
+    }
+
+    public function owedBy(int $playerId): int
+    {
+        return max(0, $this->due() - $this->paidBy($playerId));
+    }
+
+    /** Paid ahead of what's due */
+    public function creditOf(int $playerId): int
+    {
+        return max(0, $this->paidBy($playerId) - $this->due());
+    }
+
+    /** How much of that night's subs the player's money covers, oldest week first */
+    public function covered(LeagueNight $night, int $playerId): int
+    {
+        $index = $this->league->nights->search(fn (LeagueNight $n) => $n->id === $night->id);
+
+        return max(0, min($this->rate, $this->paidBy($playerId) - $index * $this->rate));
+    }
+
+    public function isPaid(LeagueNight $night, int $playerId): bool
+    {
+        return $this->covered($night, $playerId) >= $this->rate;
+    }
+
+    /** @return list<int> week numbers not fully covered, among nights due so far */
     public function weeksOwed(int $playerId): array
     {
         return $this->dueNights()->reject(fn ($n) => $this->isPaid($n, $playerId))->pluck('week')->all();
     }
 
     /**
-     * Players who owe, most weeks first.
+     * Players who owe, the most first.
      *
      * @return Collection<int, array{player: Player, weeks: list<int>, amount: int}>
      */
     public function owing(): Collection
     {
         return $this->league->players
-            ->map(fn (Player $p) => ['player' => $p, 'weeks' => $this->weeksOwed($p->id)])
-            ->filter(fn ($r) => $r['weeks'] !== [])
-            ->map(fn ($r) => $r + ['amount' => count($r['weeks']) * $this->rate])
-            ->sort(fn ($a, $b) => [count($b['weeks']), mb_strtolower($a['player']->name)] <=> [count($a['weeks']), mb_strtolower($b['player']->name)])
+            ->map(fn (Player $p) => ['player' => $p, 'weeks' => $this->weeksOwed($p->id), 'amount' => $this->owedBy($p->id)])
+            ->filter(fn ($r) => $r['amount'] > 0)
+            ->sort(fn ($a, $b) => [$b['amount'], mb_strtolower($a['player']->name)] <=> [$a['amount'], mb_strtolower($b['player']->name)])
             ->values();
     }
 
+    /** Money actually received (all payments) */
     public function received(): int
     {
-        return $this->paymentCount * $this->rate;
+        return $this->received;
     }
 
     public function expenses(): int
@@ -86,7 +121,7 @@ final class Finance
 
     public function owed(): int
     {
-        return $this->owing()->sum('amount');
+        return $this->league->players->sum(fn (Player $p) => $this->owedBy($p->id));
     }
 
     public function opening(): int
@@ -99,34 +134,40 @@ final class Finance
         return $this->opening() + $this->received() - $this->expenses();
     }
 
-    /** One week's subs: who has and hasn't paid @return array{paid: Collection, unpaid: Collection, received: int, expected: int, owed: int} */
+    /**
+     * One week's subs: who is covered in full and who isn't.
+     *
+     * @return array{paid: Collection<int, Player>, unpaid: Collection<int, Player>, covered: array<int, int>, received: int, expected: int, owed: int}
+     */
     public function week(LeagueNight $night): array
     {
-        $paid = $this->league->players->filter(fn (Player $p) => $this->isPaid($night, $p))->values();
-        $unpaid = $this->league->players->reject(fn (Player $p) => $this->isPaid($night, $p))->values();
+        $covered = [];
+        foreach ($this->league->players as $p) {
+            $covered[$p->id] = $this->covered($night, $p->id);
+        }
+        $paid = $this->league->players->filter(fn (Player $p) => $covered[$p->id] >= $this->rate)->values();
+        $unpaid = $this->league->players->reject(fn (Player $p) => $covered[$p->id] >= $this->rate)->values();
 
         return [
             'paid' => $paid,
             'unpaid' => $unpaid,
-            'received' => $paid->count() * $this->rate,
+            'covered' => $covered,
+            'received' => array_sum($covered),
             'expected' => $this->league->players->count() * $this->rate,
-            'owed' => $this->isDue($night) ? $unpaid->count() * $this->rate : 0,
+            'owed' => $this->isDue($night) ? $this->league->players->count() * $this->rate - array_sum($covered) : 0,
         ];
     }
 
-    /** @return array{paid: int, due: int, owed: int, weeks: list<int>, cells: list<array{night: LeagueNight, paid: bool}>} */
+    /** @return array{paid: int, due: int, owed: int, credit: int, weeks: list<int>, cells: list<array{night: LeagueNight, paid: bool}>} */
     public function player(int $playerId): array
     {
-        $nights = $this->dueNights();
-        $cells = $nights->map(fn ($n) => ['night' => $n, 'paid' => $this->isPaid($n, $playerId)])->all();
-        $weeks = $this->weeksOwed($playerId);
-
         return [
-            'paid' => ($nights->count() - count($weeks)) * $this->rate,
-            'due' => $nights->count() * $this->rate,
-            'owed' => count($weeks) * $this->rate,
-            'weeks' => $weeks,
-            'cells' => $cells,
+            'paid' => $this->paidBy($playerId),
+            'due' => $this->due(),
+            'owed' => $this->owedBy($playerId),
+            'credit' => $this->creditOf($playerId),
+            'weeks' => $this->weeksOwed($playerId),
+            'cells' => $this->dueNights()->map(fn ($n) => ['night' => $n, 'paid' => $this->isPaid($n, $playerId)])->all(),
         ];
     }
 

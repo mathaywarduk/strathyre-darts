@@ -9,7 +9,8 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Turns pasted lines like "Callum F beat Isla C 15" into results.
+ * Turns pasted lines like "Callum F beat Isla C 121" into results: the winner, then
+ * the checkout they won with.
  *
  * Each pair meets once a season, so a line is matched to that pair's one
  * fixture, whichever week it's in: the result counts under the fixture's own
@@ -25,7 +26,8 @@ final class ResultSubmission
     {
         $byName = $league->players->keyBy(fn ($p) => $this->norm($p->name));
         $byPair = $league->fixtures->keyBy(fn (Fixture $f) => Fixture::pairKey($f->player1_id, $f->player2_id));
-        $max = (int) config('league.max_remaining');
+        $min = (int) config('league.min_checkout');
+        $max = (int) config('league.max_checkout');
 
         $rows = [];
         $seen = [];
@@ -43,7 +45,7 @@ final class ResultSubmission
             }
             $winner = $byName->get($this->norm($m[1]));
             $loser = $byName->get($this->norm($m[2]));
-            $remaining = (int) $m[3];
+            $checkout = (int) $m[3];
 
             if (! $winner || ! $loser) {
                 $who = ! $winner ? $m[1] : $m[2];
@@ -56,8 +58,8 @@ final class ResultSubmission
 
                 continue;
             }
-            if ($remaining < 1 || $remaining > $max) {
-                $rows[] = [...$row, 'error' => "Points left must be a whole number from 1 to {$max}."];
+            if ($checkout < $min || $checkout > $max) {
+                $rows[] = [...$row, 'error' => "The checkout must be a whole number from {$min} to {$max}."];
 
                 continue;
             }
@@ -84,13 +86,13 @@ final class ResultSubmission
             $replaces = null;
             if ($fixture->result) {
                 $old = $fixture->result;
-                $replaces = $league->name($old->winner_id).' beat '.$league->name($old->loserId()).' '.$old->remaining;
+                $replaces = $league->name($old->winner_id).' beat '.$league->name($old->loserId()).' '.$old->checkout;
             }
 
             $rows[] = [
                 ...$row,
                 'fixture' => $fixture, 'winner' => $winner, 'loser' => $loser,
-                'remaining' => $remaining, 'note' => $note, 'replaces' => $replaces,
+                'checkout' => $checkout, 'note' => $note, 'replaces' => $replaces,
             ];
         }
 
@@ -117,7 +119,7 @@ final class ResultSubmission
             foreach ($preview['ok'] as $row) {
                 Result::updateOrCreate(
                     ['fixture_id' => $row['fixture']->id],
-                    ['winner_id' => $row['winner']->id, 'remaining' => $row['remaining'], 'submitted_night_id' => $night->id],
+                    ['winner_id' => $row['winner']->id, 'checkout' => $row['checkout'], 'submitted_night_id' => $night->id],
                 );
             }
 

@@ -1,10 +1,10 @@
-@props(['title' => null, 'theme' => 'dark', 'section' => 'league'])
+@props(['title' => null, 'theme' => 'dark', 'section' => 'league', 'noindex' => false])
 <!doctype html>
 <html lang="en-GB">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    @if ($theme === 'light')
+    @if ($noindex)
         <meta name="robots" content="noindex">
     @endif
     <title>{{ $title ? $title.' | ' : '' }}Strathyre Darts League</title>
@@ -18,13 +18,13 @@
 <div class="wrap">
     <header class="site-head">
         <a class="brand" href="{{ route('home') }}">Strathyre Darts League</a>
-        @auth
-            <nav class="nav" aria-label="Main">
-                <a href="{{ route('home') }}" @if ($section === 'league') aria-current="page" @endif>League</a>
-                <a href="{{ route('finance.index') }}" @if ($section === 'finance') aria-current="page" @endif>Finance</a>
+        <nav class="nav" aria-label="Main">
+            <a href="{{ route('home') }}" @if ($section === 'league') aria-current="page" @endif>League</a>
+            <a href="{{ route('finance.index') }}" @if ($section === 'finance') aria-current="page" @endif>Finance</a>
+            @auth
                 <a href="{{ route('admin.dashboard') }}">Admin</a>
-            </nav>
-        @endauth
+            @endauth
+        </nav>
     </header>
 
     @if (session('status'))

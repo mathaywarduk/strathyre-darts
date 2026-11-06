@@ -21,7 +21,7 @@ final class SeasonManager
 
             $table = $league->table()->map(fn ($r) => [
                 'pos' => $r['pos'], 'name' => $r['player']->name, 'gender' => $r['player']->gender,
-                'played' => $r['played'], 'diff' => $r['diff'], 'pts' => $r['pts'],
+                'tied' => $r['tied'], 'played' => $r['played'], 'pts' => $r['pts'],
             ])->values()->all();
 
             $weeks = $league->nights->map(fn ($night) => [
@@ -31,7 +31,7 @@ final class SeasonManager
                 'results' => $league->fixturesForNight($night)->filter(fn ($f) => $f->result)->map(fn ($f) => [
                     'winner' => $league->name($f->result->winner_id),
                     'loser' => $league->name($f->result->loserId()),
-                    'remaining' => $f->result->remaining,
+                    'checkout' => $f->result->checkout,
                 ])->values()->all(),
                 'unplayed' => $league->fixturesForNight($night)->filter(fn ($f) => ! $f->result)->map(fn ($f) => [
                     $league->name($f->player1_id), $league->name($f->player2_id),

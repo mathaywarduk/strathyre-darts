@@ -106,17 +106,18 @@ class ResultController extends Controller
     public function update(Request $request, Result $result): RedirectResponse
     {
         $fixture = $result->fixture;
-        $max = (int) config('league.max_remaining');
+        $min = (int) config('league.min_checkout');
+        $max = (int) config('league.max_checkout');
         $data = $request->validate([
             'winner_id' => ['required', Rule::in([$fixture->player1_id, $fixture->player2_id])],
-            'remaining' => ['required', 'integer', "between:1,{$max}"],
+            'checkout' => ['required', 'integer', "between:{$min},{$max}"],
             'back' => ['nullable', 'string'],
         ], [
-            'remaining.between' => "Points left must be a whole number from 1 to {$max}.",
-            'remaining.integer' => "Points left must be a whole number from 1 to {$max}.",
+            'checkout.between' => "The checkout must be a whole number from {$min} to {$max}.",
+            'checkout.integer' => "The checkout must be a whole number from {$min} to {$max}.",
         ]);
 
-        $result->update(['winner_id' => $data['winner_id'], 'remaining' => $data['remaining']]);
+        $result->update(['winner_id' => $data['winner_id'], 'checkout' => $data['checkout']]);
 
         return redirect(Dates::safePath($data['back'] ?? null, route('home', [], false)))->with('status', 'Result updated.');
     }

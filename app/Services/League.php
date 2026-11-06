@@ -62,9 +62,12 @@ final class League
     /* Table */
 
     /**
-     * Sorted by points, then score difference, then name.
+     * Sorted by points. Players level on points are split by head-to-head: who beat
+     * whom, then (for three or more) by wins against each other. Anyone still level
+     * goes alphabetically while the season runs. Once every match is played they
+     * share a position instead, because a play-off settles it.
      *
-     * @return Collection<int, array{player: Player, pos: int, played: int, won: int, lost: int, diff: int, pts: int}>
+     * @return Collection<int, array{player: Player, pos: int, tied: bool, played: int, won: int, lost: int, pts: int}>
      */
     public function table(): Collection
     {
@@ -72,43 +75,126 @@ final class League
             return $this->table;
         }
 
-        $rows = $this->players->map(fn (Player $p) => [
-            'player' => $p, 'pos' => 0, 'played' => 0, 'won' => 0, 'lost' => 0, 'diff' => 0, 'pts' => 0,
+        $stats = $this->players->map(fn (Player $p) => [
+            'player' => $p, 'pos' => 0, 'tied' => false, 'played' => 0, 'won' => 0, 'lost' => 0, 'pts' => 0,
         ])->all();
 
         foreach ($this->fixtures as $fixture) {
-            $result = $fixture->result;
-            if (! $result) {
+            if (! $fixture->result) {
                 continue;
             }
-            $winner = $result->winner_id;
+            $winner = $fixture->result->winner_id;
             $loser = $fixture->opponentOf($winner);
-            $rows[$winner]['played']++;
-            $rows[$winner]['won']++;
-            $rows[$winner]['diff'] += $result->remaining;
-            $rows[$loser]['played']++;
-            $rows[$loser]['lost']++;
-            $rows[$loser]['diff'] -= $result->remaining;
+            $stats[$winner]['played']++;
+            $stats[$winner]['won']++;
+            $stats[$loser]['played']++;
+            $stats[$loser]['lost']++;
         }
 
         $win = $this->settings->win_points ?? 0;
         $loss = $this->settings->loss_points ?? 0;
-        foreach ($rows as &$row) {
+        foreach ($stats as &$row) {
             $row['pts'] = $row['won'] * $win + $row['lost'] * $loss;
         }
         unset($row);
 
-        $sorted = collect($rows)->sort(fn ($a, $b) => [$b['pts'], $b['diff'], mb_strtolower($a['player']->name)]
-            <=> [$a['pts'], $a['diff'], mb_strtolower($b['player']->name)])->values();
+        $complete = $this->isComplete();
+        $rows = [];
+        $i = 0;
+        foreach (collect($stats)->groupBy('pts')->sortKeysDesc() as $level) {
+            $ids = $level->map(fn ($r) => $r['player']->id)->values()->all();
 
-        return $this->table = $sorted->map(function ($row, $i) {
-            $row['pos'] = $i + 1;
+            foreach ($this->breakTie($ids) as $block) {
+                usort($block, fn ($a, $b) => mb_strtolower($this->players[$a]->name) <=> mb_strtolower($this->players[$b]->name));
+                $shared = $complete && count($block) > 1;
+                $start = $i;
+                foreach ($block as $id) {
+                    $rows[$id] = [...$stats[$id], 'pos' => ($shared ? $start : $i) + 1, 'tied' => $shared];
+                    $i++;
+                }
+            }
+        }
 
-            return $row;
-        })->keyBy(fn ($row) => $row['player']->id)->sortBy('pos');
+        return $this->table = collect($rows);
     }
 
-    /** @return array{pos: int, played: int, won: int, lost: int, diff: int, pts: int, player: Player} */
+    /**
+     * Splits players level on points using the matches they played against each other.
+     *
+     * @param  list<int>  $ids
+     * @return list<list<int>> blocks in order; a block of more than one is a tie nothing could split
+     */
+    private function breakTie(array $ids): array
+    {
+        if (count($ids) === 1) {
+            return [$ids];
+        }
+
+        $wins = array_fill_keys($ids, 0);
+        foreach ($this->fixtures as $fixture) {
+            if (! $fixture->result) {
+                continue;
+            }
+            $winner = $fixture->result->winner_id;
+            if (isset($wins[$winner]) && isset($wins[$fixture->opponentOf($winner)])) {
+                $wins[$winner]++;
+            }
+        }
+
+        $buckets = [];
+        foreach ($wins as $id => $n) {
+            $buckets[$n][] = $id;
+        }
+        if (count($buckets) === 1) {
+            return [$ids]; // none played, or they all beat each other in a circle
+        }
+
+        krsort($buckets);
+        $blocks = [];
+        foreach ($buckets as $bucket) {
+            foreach ($this->breakTie($bucket) as $block) {
+                $blocks[] = $block;
+            }
+        }
+
+        return $blocks;
+    }
+
+    /** Every fixture has a result: the season is over, bar any play-offs */
+    public function isComplete(): bool
+    {
+        return $this->hasFixtures() && $this->fixtures->every(fn (Fixture $f) => (bool) $f->result);
+    }
+
+    /**
+     * The best winning checkout in the league, with everyone who hit it (earliest week first).
+     *
+     * @return array{checkout: int, fixtures: Collection<int, Fixture>}|null
+     */
+    public function bestCheckout(): ?array
+    {
+        $wins = $this->fixtures->filter(fn (Fixture $f) => $f->result);
+        if ($wins->isEmpty()) {
+            return null;
+        }
+        $best = $wins->max(fn (Fixture $f) => $f->result->checkout);
+
+        return [
+            'checkout' => $best,
+            'fixtures' => $wins->filter(fn (Fixture $f) => $f->result->checkout === $best)
+                ->sortBy(fn (Fixture $f) => [$f->night->week, $f->id])->values(),
+        ];
+    }
+
+    /** A player's best winning checkout, or null if they haven't won yet */
+    public function highestCheckout(int $playerId): ?int
+    {
+        return $this->fixtures
+            ->filter(fn (Fixture $f) => $f->result && $f->result->winner_id === $playerId)
+            ->max(fn (Fixture $f) => $f->result->checkout);
+    }
+
+    /** @return array{pos: int, tied: bool, played: int, won: int, lost: int, pts: int, player: Player} */
     public function row(int $playerId): array
     {
         return $this->table()[$playerId];

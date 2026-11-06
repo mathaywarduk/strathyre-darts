@@ -35,7 +35,7 @@
                 ['Players', 'admin.players.*', 'admin.players.index'],
                 ['Fixtures', 'admin.fixtures.*', 'admin.fixtures.index'],
                 ['Expenses', 'admin.expenses.*', 'admin.expenses.index'],
-                ['Subs owed', 'admin.subs', 'admin.subs'],
+                ['Subs', 'admin.subs*', 'admin.subs'],
                 ['Settings', 'admin.settings.*', 'admin.settings.edit'],
                 ['Season', 'admin.season.*', 'admin.season.index'],
             ] as [$label, $pattern, $route])

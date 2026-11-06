@@ -20,7 +20,7 @@ class PlayerController extends Controller
         abort_unless($league->isLive() && $league->players->has($player->id), 404);
 
         // Where "back" goes: the finance pages, or a week's subs page, for the admin who came from there
-        $from = $request->user() ? (string) $request->query('from') : '';
+        $from = (string) $request->query('from');
         $back = ['url' => route('home'), 'label' => 'Back to league table', 'section' => 'league'];
         if ($from === 'finance') {
             $back = ['url' => route('finance.index'), 'label' => 'Back to finance', 'section' => 'finance'];
@@ -40,7 +40,8 @@ class PlayerController extends Controller
             'catchUps' => $fixtures->filter(fn ($f) => $league->isCatchUp($f))->values(),
             'upcoming' => $fixtures->filter(fn ($f) => $league->isUpcoming($f))->values(),
             'results' => $fixtures->filter(fn ($f) => $f->result)->reverse()->values(),
-            'subs' => $request->user() ? (new Finance($league))->player($player->id) : null,
+            'highestCheckout' => $league->highestCheckout($player->id),
+            'subs' => (new Finance($league))->player($player->id),
         ]);
     }
 }

@@ -13,7 +13,7 @@
                 @endif
                 <div class="actions">
                     <a class="btn" href="{{ route('admin.results.index') }}">Enter week {{ $night->week }} results</a>
-                    <a class="btn ghost" href="{{ route('finance.week', $night->week) }}">Record week {{ $night->week }} subs</a>
+                    <a class="btn ghost" href="{{ route('admin.subs') }}">Record a subs payment</a>
                 </div>
             @else
                 <p class="big" style="font-size: 40px; margin: 4px 0 12px">Season complete</p>
@@ -41,8 +41,8 @@
         <h2 class="h2">Quick links</h2>
         <ul class="plain">
             <li class="line"><a class="nm" href="{{ route('admin.results.index') }}">Enter or check results</a></li>
-            <li class="line"><a class="nm" href="{{ route('finance.index') }}">Finance and recording subs</a></li>
-            <li class="line"><a class="nm" href="{{ route('admin.subs') }}">Who owes subs</a></li>
+            <li class="line"><a class="nm" href="{{ route('admin.subs') }}">Record a subs payment, or see who owes</a></li>
+            <li class="line"><a class="nm" href="{{ route('finance.index') }}">Finance</a></li>
             <li class="line"><a class="nm" href="{{ route('admin.expenses.index') }}">Add an expense</a></li>
         </ul>
     </div>

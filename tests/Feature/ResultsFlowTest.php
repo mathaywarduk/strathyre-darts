@@ -39,17 +39,19 @@ class ResultsFlowTest extends TestCase
             ->assertSee('Postponed (9)')
             ->assertSee('Lines that need fixing (3)')
             ->assertSee('No player called')
-            ->assertSee('Points left must be a whole number from 1 to 301.')
+            ->assertSee('The checkout must be a whole number from 2 to 170.')
             ->assertSee('Couldn’t read this line')
             ->assertDontSee('Confirm and save'); // can't save until the lines are fixed
     }
 
-    public function test_remaining_score_must_be_between_1_and_301(): void
+    public function test_a_checkout_must_be_a_whole_number_from_2_to_170(): void
     {
         [, $a, $b] = $this->firstMatch($this->night($this->season, 1));
 
-        $this->preview(1, "{$a} beat {$b} 301")->assertSee('Confirm and save');
-        $this->preview(1, "{$a} beat {$b} 302")->assertSee('from 1 to 301');
+        $this->preview(1, "{$a} beat {$b} 170")->assertSee('Confirm and save');
+        $this->preview(1, "{$a} beat {$b} 2")->assertSee('Confirm and save');
+        $this->preview(1, "{$a} beat {$b} 171")->assertSee('from 2 to 170');
+        $this->preview(1, "{$a} beat {$b} 1")->assertSee('from 2 to 170');
         $this->preview(1, "{$a} beat {$b} 12.5")->assertSee('Couldn’t read this line');
     }
 
@@ -73,7 +75,7 @@ class ResultsFlowTest extends TestCase
             ->assertSessionHas('status_link');
 
         $this->assertSame(1, Result::count());
-        $this->assertSame(15, $f->fresh()->result->remaining);
+        $this->assertSame(15, $f->fresh()->result->checkout);
         $this->assertNotNull($night->fresh()->submitted_at);
         $this->get('/')->assertSee('9 catch-ups to play');
     }
@@ -110,7 +112,7 @@ class ResultsFlowTest extends TestCase
         $this->preview(5, "{$a} beat {$b} 44")->assertSee('Played early: week 7 fixture');
         $this->submitLines($this->night($this->season, 5), "{$a} beat {$b} 44");
 
-        $this->assertSame(44, $f->fresh()->result->remaining);
+        $this->assertSame(44, $f->fresh()->result->checkout);
         $this->assertNull($week7->fresh()->submitted_at, 'week 7 is still to come');
     }
 
@@ -135,14 +137,14 @@ class ResultsFlowTest extends TestCase
         $result = $f->fresh()->result;
 
         $this->get(route('admin.results.edit', [$result, 'back' => '/']))->assertOk()->assertSee("{$a} v {$b}");
-        $this->put(route('admin.results.update', $result), ['winner_id' => $f->player2_id, 'remaining' => 80, 'back' => '/'])->assertRedirect('/');
+        $this->put(route('admin.results.update', $result), ['winner_id' => $f->player2_id, 'checkout' => 80, 'back' => '/'])->assertRedirect('/');
 
         $result->refresh();
         $this->assertSame($f->player2_id, $result->winner_id);
-        $this->assertSame(80, $result->remaining);
+        $this->assertSame(80, $result->checkout);
 
-        $this->put(route('admin.results.update', $result), ['winner_id' => $f->player2_id, 'remaining' => 400])->assertSessionHasErrors('remaining');
-        $this->put(route('admin.results.update', $result), ['winner_id' => 9999, 'remaining' => 5])->assertSessionHasErrors('winner_id');
+        $this->put(route('admin.results.update', $result), ['winner_id' => $f->player2_id, 'checkout' => 171])->assertSessionHasErrors('checkout');
+        $this->put(route('admin.results.update', $result), ['winner_id' => 9999, 'checkout' => 5])->assertSessionHasErrors('winner_id');
     }
 
     public function test_clearing_a_result_sends_the_match_back_to_catch_ups(): void
@@ -163,7 +165,7 @@ class ResultsFlowTest extends TestCase
         [$f, $a, $b] = $this->firstMatch($night);
         $this->submitLines($night, "{$a} beat {$b} 15");
 
-        $this->put(route('admin.results.update', $f->fresh()->result), ['winner_id' => $f->player1_id, 'remaining' => 9, 'back' => '//evil.example'])
+        $this->put(route('admin.results.update', $f->fresh()->result), ['winner_id' => $f->player1_id, 'checkout' => 9, 'back' => '//evil.example'])
             ->assertRedirect(route('home', [], false));
     }
 }

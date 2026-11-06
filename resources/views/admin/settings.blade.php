@@ -6,24 +6,34 @@
         @csrf @method('PUT')
         <h2 class="h2">League rules</h2>
         @if (! $settings->isComplete())
-            <p class="owed-text" style="margin: 0; font-weight: 600">Still to set: {{ implode(', ', $settings->missing()) }}. The league can’t go live until all three are set.</p>
+            <p class="owed-text" style="margin: 0; font-weight: 600">Still to set: {{ implode(', ', $settings->missing()) }}. The public site shows “Coming soon” until all three are set.</p>
         @endif
         <div class="cols">
             <div>
                 <label class="label" for="win_points">Points for a win</label>
-                <input class="field" id="win_points" name="win_points" type="number" min="0" max="99" inputmode="numeric" value="{{ old('win_points', $settings->win_points) }}" required>
+                <input class="field" id="win_points" name="win_points" type="number" min="0" max="99" inputmode="numeric" value="{{ old('win_points', $settings->win_points) }}">
             </div>
             <div>
                 <label class="label" for="loss_points">Points for a loss</label>
-                <input class="field" id="loss_points" name="loss_points" type="number" min="0" max="99" inputmode="numeric" value="{{ old('loss_points', $settings->loss_points) }}" required>
+                <input class="field" id="loss_points" name="loss_points" type="number" min="0" max="99" inputmode="numeric" value="{{ old('loss_points', $settings->loss_points) }}">
             </div>
         </div>
         <div>
             <label class="label" for="subs">Subs per player per league night (£)</label>
-            <input class="field" id="subs" name="subs" inputmode="decimal" value="{{ old('subs', Money::input($settings->subs_pence)) }}" required>
+            <input class="field" id="subs" name="subs" inputmode="decimal" value="{{ old('subs', Money::input($settings->subs_pence)) }}">
             <p class="hint">Changing this re-prices the whole season: every week, paid or owed, uses the new amount.</p>
         </div>
+        <p class="hint" style="margin: 0">Leave a box empty to clear it. Clearing any of them puts the public site back to “Coming soon”.</p>
         <button class="btn" type="submit">Save settings</button>
+    </form>
+
+    <form method="POST" action="{{ route('admin.settings.update') }}" class="card" onsubmit="return confirm('Clear all three league rules?')">
+        @csrf @method('PUT')
+        <input type="hidden" name="win_points" value="">
+        <input type="hidden" name="loss_points" value="">
+        <input type="hidden" name="subs" value="">
+        <p style="margin: 0 0 12px">Handing the site over empty? Clear all three rules in one go. The public site shows “Coming soon” until they’re set again.</p>
+        <button class="btn danger" type="submit">Clear league rules</button>
     </form>
 
     <form method="POST" action="{{ route('admin.settings.password') }}" class="card stack">

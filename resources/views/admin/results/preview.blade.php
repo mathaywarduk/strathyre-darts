@@ -12,7 +12,7 @@
             <h2 class="h2">Results ({{ $preview['ok']->count() }})</h2>
             @forelse ($preview['ok'] as $row)
                 <div class="weekblock" style="padding: 8px 0">
-                    <span class="okline"><strong>{{ $row['winner']->name }}</strong> beat {{ $row['loser']->name }}, <strong>+{{ $row['remaining'] }}</strong></span>
+                    <span class="okline"><strong>{{ $row['winner']->name }}</strong> beat {{ $row['loser']->name }}, checkout <strong>{{ $row['checkout'] }}</strong></span>
                     @if ($row['note'])<span class="mute"> · {{ $row['note'] }}</span>@endif
                     @if ($row['replaces'])<div class="badline">Replaces the existing result: {{ $row['replaces'] }}</div>@endif
                 </div>

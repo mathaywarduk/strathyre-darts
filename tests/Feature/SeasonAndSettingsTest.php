@@ -28,8 +28,8 @@ class SeasonAndSettingsTest extends TestCase
         $season = $this->liveLeague();
         $this->travelTo('2026-11-14 10:00');
         [, $a, $b] = $this->firstMatch($this->night($season, 1));
-        $this->submitLines($this->night($season, 1), "{$a} beat {$b} 15");
-        $this->post(route('finance.toggle', [1, Player::first()]));
+        $this->submitLines($this->night($season, 1), "{$a} beat {$b} 121");
+        $this->post(route('admin.subs.store'), ['player_id' => Player::first()->id, 'amount' => '2', 'paid_on' => '2026-11-14']);
         $this->post(route('admin.expenses.store'), ['item' => 'Chalk', 'cost' => '£3.50', 'spent_on' => '2026-11-10']);
 
         return $season;
@@ -42,7 +42,31 @@ class SeasonAndSettingsTest extends TestCase
         $this->assertSame([3, 1, 250], [$s->win_points, $s->loss_points, $s->subs_pence]);
 
         $this->put(route('admin.settings.update'), ['win_points' => 3, 'loss_points' => 1, 'subs' => 'lots'])->assertSessionHasErrors('subs');
-        $this->put(route('admin.settings.update'), ['win_points' => '', 'loss_points' => 1, 'subs' => '2'])->assertSessionHasErrors('win_points');
+        $this->put(route('admin.settings.update'), ['win_points' => 'many', 'loss_points' => 1, 'subs' => '2'])->assertSessionHasErrors('win_points');
+    }
+
+    public function test_the_league_rules_can_be_cleared_to_hand_over_empty(): void
+    {
+        $this->liveLeague();
+        $this->get('/')->assertDontSee('Coming soon');
+
+        $this->put(route('admin.settings.update'), ['win_points' => '', 'loss_points' => '', 'subs' => ''])
+            ->assertRedirect()->assertSessionHasNoErrors()
+            ->assertSessionHas('status', fn ($m) => str_contains($m, 'Coming soon'));
+
+        $s = Setting::current();
+        $this->assertSame([null, null, null], [$s->win_points, $s->loss_points, $s->subs_pence]);
+        $this->assertSame(['points for a win', 'points for a loss', 'subs per league night'], $s->missing());
+        auth()->logout();
+        $this->get('/')->assertSee('Coming soon');
+    }
+
+    public function test_one_rule_can_be_cleared_on_its_own(): void
+    {
+        $this->put(route('admin.settings.update'), ['win_points' => 3, 'loss_points' => '', 'subs' => '2.50'])->assertSessionHasNoErrors();
+        $s = Setting::current();
+        $this->assertSame([3, null, 250], [$s->win_points, $s->loss_points, $s->subs_pence]);
+        $this->get(route('admin.settings.edit'))->assertSee('Still to set: points for a loss');
     }
 
     public function test_the_admin_can_change_their_password(): void
@@ -99,7 +123,7 @@ class SeasonAndSettingsTest extends TestCase
         Player::first()->update(['name' => 'Renamed R']);
         auth()->logout();
         $this->get('/seasons')->assertSee('Season 2026/27');
-        $this->get(route('seasons.show', $old))->assertOk()->assertSee('Final table')->assertSee('+15')->assertDontSee('Renamed R');
+        $this->get(route('seasons.show', $old))->assertOk()->assertSee('Final table')->assertSee('Checkout 121', false)->assertSee('Highest checkout')->assertDontSee('Renamed R');
         $this->get('/')->assertSee('Coming soon')->assertSee('Past seasons');
     }
 

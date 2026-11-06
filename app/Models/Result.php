@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Result extends Model
 {
-    protected $fillable = ['fixture_id', 'winner_id', 'remaining', 'submitted_night_id'];
+    protected $fillable = ['fixture_id', 'winner_id', 'checkout', 'submitted_night_id'];
 
     public function fixture(): BelongsTo
     {

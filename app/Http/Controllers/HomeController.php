@@ -33,6 +33,7 @@ class HomeController extends Controller
             'league' => $league,
             'table' => $league->table(),
             'leaders' => $league->leaders(),
+            'bestCheckout' => $league->bestCheckout(),
             'night' => $night,
             'last' => $last,
             'pending' => $league->resultsPending(now()),

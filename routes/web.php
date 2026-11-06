@@ -16,13 +16,10 @@ Route::get('seasons', [SeasonArchiveController::class, 'index'])->name('seasons.
 Route::get('seasons/{season}', [SeasonArchiveController::class, 'show'])->name('seasons.show');
 
 /*
-| Finance: admin only. A 404 for anyone who isn't logged in, so it doesn't appear to exist.
+| Finance: public. Recording payments is in the admin.
 */
-Route::middleware('hidden')->prefix('finance')->name('finance.')->group(function () {
-    Route::get('/', [FinanceController::class, 'index'])->name('index');
-    Route::get('weeks/{week}', [FinanceController::class, 'week'])->whereNumber('week')->name('week');
-    Route::post('weeks/{week}/players/{player}', [FinanceController::class, 'toggle'])->whereNumber('week')->name('toggle');
-});
+Route::get('finance', [FinanceController::class, 'index'])->name('finance.index');
+Route::get('finance/weeks/{week}', [FinanceController::class, 'week'])->whereNumber('week')->name('finance.week');
 
 /*
 | Admin (one login, created with `php artisan darts:admin`)
@@ -66,6 +63,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('expenses/{expense}', [Admin\ExpenseController::class, 'destroy'])->name('expenses.destroy');
 
         Route::get('subs', [Admin\SubsController::class, 'index'])->name('subs');
+        Route::post('subs', [Admin\SubsController::class, 'store'])->name('subs.store');
+        Route::delete('subs/{payment}', [Admin\SubsController::class, 'destroy'])->name('subs.destroy');
 
         Route::get('settings', [Admin\SettingsController::class, 'edit'])->name('settings.edit');
         Route::put('settings', [Admin\SettingsController::class, 'update'])->name('settings.update');
