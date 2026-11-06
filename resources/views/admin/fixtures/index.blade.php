@@ -14,14 +14,14 @@
             <h2 class="h2">Saved fixtures</h2>
             <p class="sub">{{ $league->totalWeeks() }} weeks, {{ $league->fixtures->count() }} matches. Move a week to a different night if it’s being played on another day: subs are due from the new date.</p>
             @foreach ($league->nights as $night)
-                <form method="POST" action="{{ route('admin.fixtures.night', $night) }}" class="line">
+                <form method="POST" action="{{ route('admin.fixtures.night', $night) }}" class="line wrap">
                     @csrf @method('PUT')
                     <span>
                         <strong>Week {{ $night->week }}</strong>
                         <span class="mute">{{ $league->fixturesForNight($night)->count() }} matches @if ($night->isSubmitted())· results in @endif</span>
                     </span>
                     <span class="right">
-                        <input class="field" style="width: 160px" type="date" name="date" value="{{ $night->date->toDateString() }}" aria-label="Date for week {{ $night->week }}">
+                        <input class="field date-sm" type="date" name="date" value="{{ $night->date->toDateString() }}" aria-label="Date for week {{ $night->week }}">
                         <button class="ed" type="submit">Move</button>
                     </span>
                 </form>

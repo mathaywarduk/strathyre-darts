@@ -98,7 +98,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 
 /* Lines */
 .line { display: flex; justify-content: space-between; gap: 12px; align-items: center; min-height: 46px; border-bottom: 1px solid var(--line); }
-.line .right { display: flex; align-items: center; gap: 12px; }
+.line .right { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.line.wrap { flex-wrap: wrap; padding: 6px 0; }
 .line-row { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; gap: 12px; align-items: center; min-height: 46px; border-bottom: 1px solid var(--line); }
 .line-row.four { grid-template-columns: 72px minmax(0, 1fr) auto auto; }
 .line-row.expense { grid-template-columns: 64px minmax(0, 1fr) auto; }
@@ -144,9 +145,14 @@ body.light .week-btn.paid { color: #7a766c; }
 .field { width: 100%; min-height: 44px; padding: 8px 12px; background: var(--field-bg); border: 1px solid var(--fg); border-radius: 3px; }
 textarea.field { min-height: 160px; font-family: ui-monospace, Menlo, monospace; font-size: 15px; line-height: 1.5; }
 select.field { appearance: auto; }
+/* Date inputs ignore width on iOS and push past the edge unless told off */
+input[type="date"].field { -webkit-appearance: none; appearance: none; display: block; min-width: 0; max-width: 100%; text-align: left; }
+input[type="date"].field::-webkit-date-and-time-value { text-align: left; min-height: 1.4em; }
+.date-sm { flex: 0 1 160px; width: 160px; }
 .hint { color: var(--mute); font-size: 14px; margin: 4px 0 0; }
 .stack > * + * { margin-top: 16px; }
 .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.cols > * { min-width: 0; }
 .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 20px; background: var(--fg); color: var(--bg); border: 1px solid var(--fg); border-radius: 3px; font-weight: 700; cursor: pointer; text-decoration: none; }
 .btn:hover { background: var(--hover); color: var(--bg); }
 .btn.ghost { background: transparent; color: var(--fg); border-color: var(--btn-border); font-weight: 600; }
