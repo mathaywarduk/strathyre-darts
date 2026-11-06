@@ -21,6 +21,20 @@ class AppServiceProvider extends ServiceProvider
             $view->with(LeagueState::flags());
         });
 
+        // Admin pages show how far through setup the league is, until it's live
+        View::composer('components.layouts.admin', function ($view) {
+            if (! auth()->check()) {
+                return;
+            }
+            $steps = LeagueState::setup();
+            $done = count(array_filter($steps, fn ($s) => $s[1]));
+            $view->with([
+                'setupTotal' => count($steps),
+                'setupDone' => $done,
+                'setupNext' => collect($steps)->first(fn ($s) => ! $s[1]),
+            ]);
+        });
+
         if ($this->app->isProduction()) {
             URL::forceScheme('https');
         }

@@ -87,4 +87,31 @@ class NavTest extends TestCase
         $this->get(route('players.show', $stranger))->assertRedirect(route('home'));
         $this->get('/seasons/'.Season::first()->id)->assertRedirect(route('seasons.index'));
     }
+
+    public function test_admin_pages_show_the_next_setup_step_until_the_league_is_live(): void
+    {
+        $this->actingAs($this->admin());
+
+        $this->get(route('admin.players.index'))->assertSee('Setup 0 of 4')->assertSee('Next:')->assertSee('Upload the players');
+        $this->get(route('admin.dashboard'))->assertDontSee('Setup 0 of 4'); // the checklist is on that page
+
+        $this->makePlayers(4);
+        $this->get(route('admin.settings.edit'))->assertSee('Setup 1 of 4')->assertSee('Set points and subs');
+
+        Setting::current()->update(['win_points' => 2, 'loss_points' => 1, 'subs_pence' => 200]);
+        $this->get(route('admin.players.index'))->assertSee('Setup 2 of 4')->assertSee('Start a season');
+
+        $season = Season::create(['starts_on' => '2026-11-13', 'status' => 'current']);
+        $this->get(route('admin.settings.edit'))->assertSee('Setup 3 of 4')->assertSee('Save the fixtures');
+
+        $this->post(route('admin.fixtures.generate'), ['start_on' => '2026-11-13']);
+        $this->post(route('admin.fixtures.save'), ['token' => session('fixture_draft.token')]);
+        $this->get(route('admin.settings.edit'))->assertDontSee('Setup 3 of 4')->assertDontSee('Setup 4 of 4')->assertDontSee('Next:');
+        $this->assertTrue($season->fixtures()->exists());
+    }
+
+    public function test_the_setup_bar_never_shows_to_guests(): void
+    {
+        $this->get(route('admin.login'))->assertOk()->assertDontSee('Setup 0 of 4');
+    }
 }

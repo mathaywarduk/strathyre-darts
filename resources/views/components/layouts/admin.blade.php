@@ -46,6 +46,15 @@
         </nav>
     @endauth
 
+    @auth
+        @if (($setupNext ?? null) && ! request()->routeIs('admin.dashboard'))
+            <p class="setup-bar" role="status">
+                <strong>Setup {{ $setupDone }} of {{ $setupTotal }}</strong>
+                <span>Next: <a href="{{ $setupNext[2] }}">{{ $setupNext[0] }}</a></span>
+            </p>
+        @endif
+    @endauth
+
     @if (session('status'))
         <p class="flash" role="status">{{ session('status') }}
             @if (session('status_link'))

@@ -173,6 +173,7 @@ body:not(.light) .btn.danger { color: #000; }
 .admin-nav { display: flex; flex-wrap: wrap; gap: 0 18px; border-bottom: 1px solid var(--line-strong); padding-bottom: 4px; margin-bottom: 8px; }
 .admin-nav a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: none; color: var(--mute); font-weight: 500; border-bottom: 2px solid transparent; }
 .admin-nav a[aria-current] { color: var(--fg); font-weight: 700; border-bottom-color: var(--fg); }
+.setup-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 14px; margin: 8px 0 16px; padding: 10px 14px; border: 1px solid var(--fg); border-radius: 4px; }
 .admin-tag { display: inline-block; background: var(--fg); color: var(--bg); font-size: 12px; font-weight: 700; line-height: 1; padding: 4px 7px; border-radius: 3px; margin-left: 8px; vertical-align: middle; }
 .linkbtn { background: none; border: 0; padding: 0; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; color: var(--mute); min-height: 44px; }
 .plain { list-style: none; margin: 0; padding: 0; }
