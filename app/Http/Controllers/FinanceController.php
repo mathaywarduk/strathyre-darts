@@ -70,9 +70,14 @@ class FinanceController extends Controller
     private function finance(): Finance
     {
         $season = Season::current();
-        abort_unless($season, 404);
-        $league = new League($season, Setting::current());
-        abort_unless($league->isLive(), 404);
+        $league = $season ? new League($season, Setting::current()) : null;
+
+        // Logged in but the league isn't set up yet: say so, rather than a 404
+        if (! $league || ! $league->isLive()) {
+            redirect()->route('admin.dashboard')
+                ->withErrors(['finance' => 'Finance needs the league set up first: points, subs per night and saved fixtures.'])
+                ->throwResponse();
+        }
 
         return new Finance($league);
     }

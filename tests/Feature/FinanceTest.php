@@ -131,4 +131,16 @@ class FinanceTest extends TestCase
         $this->travelTo('2026-11-14 09:00');
         $this->get(route('admin.subs'))->assertOk()->assertSee('£40.00')->assertSee('Week 1');
     }
+
+    public function test_finance_explains_when_the_league_is_not_set_up_yet(): void
+    {
+        Season::query()->delete();
+        Setting::current()->update(['win_points' => null]);
+        Season::create(['starts_on' => '2026-11-13', 'status' => 'current']);
+
+        $this->get('/finance')->assertRedirect(route('admin.dashboard'))->assertSessionHasErrors('finance');
+        $this->get('/finance/weeks/1')->assertRedirect(route('admin.dashboard'));
+        auth()->logout();
+        $this->get('/finance')->assertNotFound();
+    }
 }
