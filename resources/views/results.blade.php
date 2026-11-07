@@ -13,6 +13,7 @@
         </p>
     @endif
 
+    <div class="narrow">
     @forelse ($weeks as $w)
         <section class="sec {{ $loop->first ? 'first' : '' }}">
             <h2 class="h2">Week {{ $w['night']->week }}</h2>
@@ -35,4 +36,5 @@
             <section class="sec first"><p class="sub">No results yet.</p></section>
         @endunless
     @endforelse
+    </div>
 </x-layouts.site>

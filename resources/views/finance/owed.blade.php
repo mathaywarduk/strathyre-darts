@@ -9,6 +9,7 @@
     </section>
 
     <section class="sec first">
+        <div class="cols-2">
         @forelse ($owing as $o)
             <div class="owing-row">
                 <a class="nm" style="font-weight: 600" href="{{ route('players.show', [$o['player'], 'from' => 'owed']) }}">{{ $o['player']->name }}</a>
@@ -18,6 +19,7 @@
         @empty
             <p style="margin: 8px 0 0">Nobody owes anything.</p>
         @endforelse
+        </div>
         @auth
             <p class="mute sec"><a href="{{ route('admin.subs') }}">Record a payment</a></p>
         @endauth

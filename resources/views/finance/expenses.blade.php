@@ -7,7 +7,7 @@
         <div class="finance-balance" style="font-size: 64px; margin-top: 12px">{{ Money::format($finance->expenses()) }}</div>
     </section>
 
-    <section class="sec first">
+    <section class="sec first narrow">
         @forelse ($expenses as $e)
             <div class="line-row expense">
                 <span class="mute">{{ Dates::short($e->spent_on) }}</span>

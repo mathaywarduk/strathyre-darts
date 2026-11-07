@@ -231,3 +231,48 @@ tr .nm { font-weight: 500; }
     .badge .b-long { display: none; }
     .badge .b-short { display: inline; }
 }
+
+/* ---------------------------------------------------------------------- */
+/* Layout helpers. On a phone these all stack in one column, as before.    */
+
+.fin-top, .split { display: block; }
+.grid-2, .cols-2 { display: block; }
+.pcols { display: flex; flex-direction: column; }
+.pcol-a, .pcol-b { display: contents; } /* on a phone the sections follow the order below */
+.pc-stats { order: 1; }
+.pc-panels { order: 2; }
+.pc-fixtures { order: 3; }
+.pc-results { order: 4; }
+.pc-subs { order: 5; }
+
+/* ---------------------------------------------------------------------- */
+/* Desktop: use the width.                                                 */
+
+@media (min-width: 960px) {
+    .wrap:not(.wide) { max-width: 1120px; padding: 24px 32px 80px; } /* the admin keeps its own width */
+
+    /* Home and past seasons: the table on the left, the rest beside it */
+    .split { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 0 64px; align-items: start; }
+    .split.even { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .split-side > :first-child { padding-top: 16px; }
+    .split.even .split-side > :first-child { padding-top: 32px; }
+
+    /* Lists of weeks and people in two columns */
+    .grid-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 64px; align-items: start; }
+    .grid-2 > section { padding-top: 32px; }
+    /* Longer lists flow down one column, then the next, so they still read in order */
+    .cols-2 { column-count: 2; column-gap: 64px; }
+    .cols-2 > * { break-inside: avoid; }
+    .cols-2 > section { padding-top: 32px; }
+    .narrow { max-width: 640px; }
+
+    /* Finance: the balance beside the headline figures */
+    .fin-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 64px; align-items: end; padding: 24px 0 28px; border-bottom: 1px solid var(--line-strong); }
+    .fin-top .hero { border-bottom: 0; padding: 0; }
+    .fin-top .sec { padding-top: 0; }
+
+    /* Player page: stats, next match and subs on the left; fixtures and results on the right */
+    .pcols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 64px; align-items: start; }
+    .pcol-a, .pcol-b { display: block; }
+    .pc-fixtures { padding-top: 24px; }
+}

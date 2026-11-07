@@ -13,6 +13,7 @@
         </div>
     </section>
 
+    <div class="grid-2">
     <section class="sec first">
         <h2 class="h2">Not paid ({{ $week['unpaid']->count() }})</h2>
         @if ($week['unpaid']->isEmpty())
@@ -37,6 +38,7 @@
         @endforeach
     </section>
 
+    </div>
     @auth
         <p class="mute sec"><a href="{{ route('admin.subs') }}">Record a payment</a></p>
     @endauth

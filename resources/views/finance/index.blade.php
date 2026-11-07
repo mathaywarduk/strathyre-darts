@@ -1,5 +1,6 @@
 @use('App\Support\Money')
 <x-layouts.site title="Finance" section="finance">
+    <div class="fin-top">
     <section class="hero">
         <div class="mute" style="font-size: 15px">Balance</div>
         <div class="finance-balance">{{ Money::format($finance->balance()) }}</div>
@@ -25,4 +26,5 @@
         </div>
         @include('partials.subs-updated', ['updated' => $finance->league->season->subs_updated_at])
     </section>
+    </div>
 </x-layouts.site>

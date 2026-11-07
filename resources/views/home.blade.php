@@ -6,6 +6,8 @@
         : 'All '.$league->totalWeeks().' weeks played, '.$catchText;
 @endphp
 <x-layouts.site>
+    <div class="split">
+    <div class="split-main">
     <section style="padding-top: 16px">
         <h2 class="h2">League table</h2>
         <p class="sub">{{ $progress }}</p>
@@ -53,6 +55,8 @@
         @endif
     </section>
 
+    </div>
+    <div class="split-side">
     @if ($bestCheckout)
         <section class="sec">
             <div class="checkout-card">
@@ -99,6 +103,9 @@
             <p style="margin: 8px 0 0">No catch-ups to play.</p>
         @endforelse
     </section>
+
+    </div>
+    </div>
 
     @if ($hasArchive)
         <p class="mute sec"><a href="{{ route('seasons.index') }}">Past seasons</a></p>

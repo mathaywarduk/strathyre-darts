@@ -6,6 +6,7 @@
         <p class="mute">Final table and results</p>
     </section>
 
+    <div class="split even"><div class="split-main">
     <section class="sec first">
         <h2 class="h2">Final table</h2>
         <div style="overflow-x: auto">
@@ -59,6 +60,7 @@
         </section>
     @endif
 
+    </div><div class="split-side">
     @foreach (array_reverse($snapshot['weeks']) as $week)
         @if (count($week['results']) || count($week['unplayed']))
             <section class="sec">
@@ -76,4 +78,5 @@
             </section>
         @endif
     @endforeach
+    </div></div>
 </x-layouts.site>

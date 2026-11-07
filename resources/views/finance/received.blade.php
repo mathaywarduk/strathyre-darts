@@ -10,6 +10,7 @@
 
     <section class="sec first">
         <h2 class="h2">Week by week</h2>
+        <div class="narrow">
         @forelse ($weeks as $w)
             <div class="week-row">
                 <div class="top">
@@ -24,5 +25,6 @@
         @empty
             <p class="sub">No league nights yet.</p>
         @endforelse
+        </div>
     </section>
 </x-layouts.site>

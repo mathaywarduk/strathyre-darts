@@ -171,4 +171,44 @@ class HomeTest extends TestCase
         $this->assertStringContainsString('Week 2 results', $html);
         $this->assertLessThan(strpos($html, '<h2 class="h2">Week 1</h2>'), strpos($html, 'Week 2 results'));
     }
+
+    public function test_the_public_pages_have_their_desktop_layout_hooks(): void
+    {
+        $season = $this->liveLeague();
+        $this->travelTo('2026-11-21 09:00');
+        $this->win($season, 'Bob B', 'Cara C', 100);
+
+        // Home: the table beside a side column; the rest stack on a phone
+        $html = $this->get('/')->getContent();
+        $this->assertStringContainsString('class="split"', $html);
+        $this->assertStringContainsString('class="split-main"', $html);
+        $this->assertStringContainsString('class="split-side"', $html);
+        $this->assertLessThan(strpos($html, 'split-side'), strpos($html, 'League table'));
+        $this->assertGreaterThan(strpos($html, 'split-side'), strpos($html, 'Catch-up fixtures'));
+
+        // Results and subs received stay a single column
+        $this->get('/results')->assertSee('class="narrow"', false)->assertDontSee('cols-2', false);
+        $this->get('/finance')->assertSee('class="fin-top"', false);
+        $this->get('/finance/subs-received')->assertSee('class="narrow"', false)->assertDontSee('cols-2', false);
+        $this->get('/finance/subs-owed')->assertSee('class="cols-2"', false);
+        $this->get('/finance/weeks/1')->assertSee('class="grid-2"', false);
+        $this->get(route('players.show', Player::where('name', 'Bob B')->value('id')))->assertSee('class="pcols"', false);
+    }
+
+    public function test_the_player_page_keeps_its_phone_order_in_the_markup_order_of_each_column(): void
+    {
+        $season = $this->liveLeague();
+        $html = $this->get(route('players.show', Player::where('name', 'Bob B')->value('id')))->getContent();
+
+        // Left column: stats, next match, subs. Right column: fixtures, results.
+        $order = ['pc-stats', 'pc-panels', 'pc-subs', 'pc-fixtures', 'pc-results'];
+        $positions = array_map(fn ($c) => strpos($html, 'class="'.($c === 'pc-stats' ? $c : ($c === 'pc-panels' ? 'panels '.$c : 'sec '.$c))), $order);
+        $this->assertSame($positions, collect($positions)->sort()->values()->all());
+    }
+
+    public function test_the_admin_keeps_its_own_width(): void
+    {
+        $this->actingAs($this->admin());
+        $this->get(route('admin.settings.edit'))->assertSee('class="wrap wide"', false)->assertDontSee('admin-grid', false);
+    }
 }

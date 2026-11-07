@@ -18,7 +18,9 @@
         @if ($holdsBestCheckout)<p><span class="badge co">Highest checkout</span></p>@endif
     </section>
 
-    <section style="padding-top: 24px">
+    <div class="pcols">
+    <div class="pcol-a">
+    <section class="pc-stats" style="padding-top: 24px">
         <div class="stats3">
             <div><div class="big" style="font-size: 44px">{{ Dates::ordinal($row['pos']) }}{{ $row['tied'] ? '=' : '' }}</div><div class="mute">League position</div></div>
             <div><div class="big" style="font-size: 44px">{{ $row['pts'] }}</div><div class="mute">Points</div></div>
@@ -30,7 +32,7 @@
     </section>
 
     @if ($next || $catchUps->isNotEmpty())
-        <section class="panels">
+        <section class="panels pc-panels">
             @if ($next)
                 <div class="panel next">
                     <div class="mute">Next match</div>
@@ -47,7 +49,23 @@
         </section>
     @endif
 
-    <section class="sec">
+    <section class="sec pc-subs">
+        <h2 class="h2">Subs</h2>
+        <p style="margin: 8px 0 14px; font-variant-numeric: tabular-nums">
+            <span class="mute">Paid:</span> <strong>{{ Money::format($subs['paid']) }}</strong>
+            <span style="display: inline-block; width: 20px"></span>
+            <span class="mute">Owes:</span> <strong @class(['owed-text' => $subs['owed'] > 0])>{{ Money::format($subs['owed']) }}</strong>
+        </p>
+        @include('partials.subs-updated', ['updated' => $subsUpdated])
+        <div class="week-grid" style="margin-top: 14px">
+            @foreach ($subs['cells'] as $cell)
+                <a class="week-btn {{ $cell['paid'] ? 'paid' : '' }}" href="{{ route('finance.week', $cell['night']->week) }}" aria-label="Week {{ $cell['night']->week }}, {{ $cell['paid'] ? 'paid' : 'not paid in full' }}"><small>Week</small>{{ $cell['night']->week }}</a>
+            @endforeach
+        </div>
+    </section>
+    </div>
+    <div class="pcol-b">
+    <section class="sec pc-fixtures">
         <h2 class="h2">Fixtures</h2>
         @forelse ($upcoming as $f)
             <div class="line-row">
@@ -60,7 +78,7 @@
         @endforelse
     </section>
 
-    <section class="sec">
+    <section class="sec pc-results">
         <h2 class="h2">Results</h2>
         @forelse ($results as $f)
             @php
@@ -80,18 +98,6 @@
         @endforelse
     </section>
 
-    <section class="sec">
-        <h2 class="h2">Subs</h2>
-        <p style="margin: 8px 0 14px; font-variant-numeric: tabular-nums">
-            <span class="mute">Paid:</span> <strong>{{ Money::format($subs['paid']) }}</strong>
-            <span style="display: inline-block; width: 20px"></span>
-            <span class="mute">Owes:</span> <strong @class(['owed-text' => $subs['owed'] > 0])>{{ Money::format($subs['owed']) }}</strong>
-        </p>
-        @include('partials.subs-updated', ['updated' => $subsUpdated])
-        <div class="week-grid" style="margin-top: 14px">
-            @foreach ($subs['cells'] as $cell)
-                <a class="week-btn {{ $cell['paid'] ? 'paid' : '' }}" href="{{ route('finance.week', $cell['night']->week) }}" aria-label="Week {{ $cell['night']->week }}, {{ $cell['paid'] ? 'paid' : 'not paid in full' }}"><small>Week</small>{{ $cell['night']->week }}</a>
-            @endforeach
-        </div>
-    </section>
+    </div>
+    </div>
 </x-layouts.site>
