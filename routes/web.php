@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PlayerController;
+use App\Http\Controllers\ResultsController;
 use App\Http\Controllers\SeasonArchiveController;
 use Illuminate\Support\Facades\Route;
 
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\Route;
 | Public site
 */
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('results', [ResultsController::class, 'index'])->name('results.index');
 Route::get('players/{player}', [PlayerController::class, 'show'])->name('players.show');
 Route::get('seasons', [SeasonArchiveController::class, 'index'])->name('seasons.index');
 Route::get('seasons/{season}', [SeasonArchiveController::class, 'show'])->name('seasons.show');
@@ -19,6 +21,9 @@ Route::get('seasons/{season}', [SeasonArchiveController::class, 'show'])->name('
 | Finance: public. Recording payments is in the admin.
 */
 Route::get('finance', [FinanceController::class, 'index'])->name('finance.index');
+Route::get('finance/subs-received', [FinanceController::class, 'received'])->name('finance.received');
+Route::get('finance/subs-owed', [FinanceController::class, 'owed'])->name('finance.owed');
+Route::get('finance/expenses', [FinanceController::class, 'expenses'])->name('finance.expenses');
 Route::get('finance/weeks/{week}', [FinanceController::class, 'week'])->whereNumber('week')->name('finance.week');
 
 /*

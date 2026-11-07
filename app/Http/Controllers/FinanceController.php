@@ -13,18 +13,37 @@ use Illuminate\View\View;
 /** Public: the league's money, week by week. Recording payments is in the admin. */
 class FinanceController extends Controller
 {
+    /** The headline numbers, each linking to its detail page. */
     public function index(): View
+    {
+        return view('finance.index', ['finance' => $this->finance()]);
+    }
+
+    public function received(): View
     {
         $finance = $this->finance();
 
-        $weeks = $finance->dueNights()->reverse()->values()->map(
-            fn (LeagueNight $night) => ['night' => $night] + $finance->week($night)
-        );
-
-        return view('finance.index', [
+        return view('finance.received', [
             'finance' => $finance,
-            'owing' => $finance->owing(),
-            'weeks' => $weeks,
+            'weeks' => $finance->dueNights()->reverse()->values()->map(
+                fn (LeagueNight $night) => ['night' => $night] + $finance->week($night)
+            ),
+        ]);
+    }
+
+    public function owed(): View
+    {
+        $finance = $this->finance();
+
+        return view('finance.owed', ['finance' => $finance, 'owing' => $finance->owing()]);
+    }
+
+    public function expenses(): View
+    {
+        $finance = $this->finance();
+
+        return view('finance.expenses', [
+            'finance' => $finance,
             'expenses' => $finance->league->season->expenses()->get(),
         ]);
     }

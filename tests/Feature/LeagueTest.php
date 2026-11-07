@@ -235,7 +235,8 @@ class LeagueTest extends TestCase
         auth()->logout();
 
         $this->get('/')->assertSee('Week 2')->assertDontSee('Results pending')
-            ->assertSee('1 of 19 weeks played, 9 catch-ups to play')->assertSeeInOrder(['Checkout:', '121']);
+            ->assertSee('1 of 19 weeks played, 9 catch-ups to play');
+        $this->get('/results')->assertSeeInOrder(['Checkout:', '121']);
     }
 
     public function test_the_league_is_not_live_until_settings_and_fixtures_exist(): void
@@ -262,5 +263,70 @@ class LeagueTest extends TestCase
         // Someone whose week 1 match wasn't played has a catch-up panel
         $other = $season->fixtures()->where('league_night_id', $this->night($season, 1)->id)->where('id', '!=', $f->id)->first();
         $this->get(route('players.show', $other->player1_id))->assertSee('Catch-up from week 1');
+    }
+
+    public function test_the_top_three_rows_are_bigger_once_play_has_started(): void
+    {
+        $season = $this->liveLeague();
+        $html = $this->get('/')->getContent();
+        $this->assertStringNotContainsString('class="p1', $html, 'nobody stands out before a match is played');
+
+        $this->win($season, 'Tess T', 'Alice A');
+        $this->win($season, 'Tess T', 'Bob B');
+        $this->win($season, 'Sam S', 'Cara C');
+        $this->win($season, 'Rae R', 'Dan D');
+        $html = $this->get('/')->getContent();
+
+        $this->assertSame(1, substr_count($html, 'p1'), 'one first place');
+        $this->assertMatchesRegularExpression('/<tr class="[^"]*\bp1\b[^"]*">\s*<td[^>]*>1<\/td>\s*<td class="l">.*?Tess T/s', $html);
+        $this->assertMatchesRegularExpression('/\bp2\b/', $html);
+        $this->assertMatchesRegularExpression('/\bp3\b/', $html);
+        $this->assertSame(0, preg_match('/\bp4\b/', $html));
+    }
+
+    public function test_tied_players_share_the_big_row_at_the_end_of_the_season(): void
+    {
+        $season = $this->liveLeague(3);
+        $this->win($season, 'Alice A', 'Bob B');
+        $this->win($season, 'Bob B', 'Cara C');
+        $this->win($season, 'Cara C', 'Alice A');
+
+        $this->assertSame(3, preg_match_all('/<tr class="[^"]*\bp1\b/', $this->get('/')->getContent()));
+    }
+
+    public function test_the_highest_checkout_tag_goes_on_whoever_holds_it(): void
+    {
+        $season = $this->liveLeague();
+        $this->get('/')->assertDontSee('badge co', false);
+
+        $this->win($season, 'Tess T', 'Alice A', 60);
+        $this->win($season, 'Bob B', 'Cara C', 164);
+        $bob = Player::where('name', 'Bob B')->value('id');
+        $tess = Player::where('name', 'Tess T')->value('id');
+
+        $html = $this->get('/')->assertSee('Highest checkout')->getContent();
+        $this->assertSame(1, substr_count($html, 'badge co'));
+        $this->assertMatchesRegularExpression('/Bob B<\/a>.*?<span class="badge co"/s', $html);
+
+        $this->get(route('players.show', $bob))->assertSee('badge co', false);
+        $this->get(route('players.show', $tess))->assertDontSee('badge co', false);
+
+        // A tie tags both
+        $this->win($season, 'Dan D', 'Eve E', 164);
+        $this->assertSame(2, substr_count($this->get('/')->getContent(), 'badge co'));
+    }
+
+    public function test_the_table_badges_have_a_short_form_for_phones(): void
+    {
+        $season = $this->liveLeague();
+        $this->win($season, 'Alice A', 'Bob B', 164); // Alice (W) leads the women and holds the best checkout; Bob (M) is the only man to have played
+        $html = $this->get('/')->getContent();
+        $this->assertStringContainsString('<span class="b-long">Women’s leader</span><span class="b-short" aria-hidden="true">WL</span>', $html);
+        $this->assertStringContainsString('<span class="b-long">Men’s leader</span><span class="b-short" aria-hidden="true">ML</span>', $html);
+        $this->assertStringContainsString('<span class="b-long">Highest checkout</span><span class="b-short" aria-hidden="true">HC</span>', $html);
+
+        // Only the league table abbreviates: the player page keeps the full words
+        $alice = Player::where('name', 'Alice A')->value('id');
+        $this->get(route('players.show', $alice))->assertSee('Women’s leader')->assertSee('Highest checkout')->assertDontSee('b-short', false);
     }
 }

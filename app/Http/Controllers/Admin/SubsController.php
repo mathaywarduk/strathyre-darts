@@ -29,7 +29,6 @@ class SubsController extends Controller
             'owing' => $owing,
             'selected' => (int) $request->query('player', old('player_id')),
             'payments' => $finance->league->season->payments()->with('player')->orderByDesc('paid_on')->orderByDesc('id')->limit(30)->get(),
-            'text' => $owing->map(fn ($r) => $r['player']->name.' '.Money::format($r['amount']).' ('.Finance::weeksText($r['weeks']).')')->implode("\n"),
         ]);
     }
 
@@ -57,6 +56,7 @@ class SubsController extends Controller
             'amount_pence' => $pence,
             'paid_on' => $data['paid_on'],
         ]);
+        $finance->league->season->update(['subs_updated_at' => now()]);
 
         $after = $this->finance();
         $owed = $after->owedBy($player->id);
@@ -69,6 +69,7 @@ class SubsController extends Controller
     public function destroy(SubsPayment $payment): RedirectResponse
     {
         $payment->delete();
+        Season::whereKey($payment->season_id)->update(['subs_updated_at' => now()]);
 
         return redirect()->route('admin.subs')->with('status', 'Payment deleted.');
     }

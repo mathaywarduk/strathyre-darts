@@ -126,7 +126,8 @@ class ResultsFlowTest extends TestCase
         $this->post(route('admin.results.save'), ['week' => $night->id, 'mode' => 'none'])->assertRedirect(route('admin.dashboard'));
 
         $this->assertTrue($night->fresh()->no_results);
-        $this->get('/')->assertSee('Week 2')->assertSee('10 catch-ups to play')->assertSee('No matches were played');
+        $this->get('/')->assertSee('Week 2')->assertSee('10 catch-ups to play');
+        $this->get('/results')->assertSee('No results yet');
     }
 
     public function test_editing_a_result_changes_the_winner_and_the_points_left(): void
@@ -167,5 +168,12 @@ class ResultsFlowTest extends TestCase
 
         $this->put(route('admin.results.update', $f->fresh()->result), ['winner_id' => $f->player1_id, 'checkout' => 9, 'back' => '//evil.example'])
             ->assertRedirect(route('home', [], false));
+    }
+
+    public function test_the_week_dropdown_does_not_say_this_week(): void
+    {
+        $this->get(route('admin.results.index'))->assertOk()->assertSee('Week 1')->assertDontSee('· this week');
+        $this->submitLines($this->night($this->season, 1), '');
+        $this->get(route('admin.results.index'))->assertSee('results in');
     }
 }

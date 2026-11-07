@@ -10,7 +10,7 @@
             <select class="field" id="week" name="week">
                 @foreach ($league->nights as $night)
                     <option value="{{ $night->id }}" @selected($selected === $night->id)>
-                        Week {{ $night->week }} · {{ Dates::short($night->date) }}@if ($night->isSubmitted()) · results in @elseif ($night->id === $league->currentNight()?->id) · this week @endif
+                        Week {{ $night->week }} · {{ Dates::short($night->date) }}@if ($night->isSubmitted()) · results in @endif
                     </option>
                 @endforeach
             </select>

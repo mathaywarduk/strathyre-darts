@@ -26,7 +26,6 @@ class HomeController extends Controller
         }
 
         $night = $league->currentNight();
-        $last = $league->lastNight();
         $catchUps = $league->catchUps();
 
         return view('home', [
@@ -34,12 +33,11 @@ class HomeController extends Controller
             'table' => $league->table(),
             'leaders' => $league->leaders(),
             'bestCheckout' => $league->bestCheckout(),
+            'bestCheckoutIds' => $league->bestCheckoutPlayerIds(),
             'night' => $night,
-            'last' => $last,
             'pending' => $league->resultsPending(now()),
             'nextFixtures' => $night ? $league->fixturesForNight($night) : collect(),
             'byes' => $night ? $league->byes($night) : collect(),
-            'lastResults' => $last ? $league->resultsSubmittedWith($last) : collect(),
             'catchUps' => $catchUps,
             'hasArchive' => Season::where('status', 'archived')->exists(),
         ]);

@@ -2,7 +2,7 @@
 
 Table, fixtures, results and subs for a 20-player darts league. Single-leg 301 matches, one league night a week (Friday).
 
-- **Public site** (`/`): league table, next week's fixtures, last week's results, catch-ups, player pages (with each player's highest checkout and subs), finance (balance, subs owed, income per week, expenses), past seasons.
+- **Public site** (`/`): league table, the highest checkout, the current week's fixtures, catch-ups, a results page (every result by week), player pages (with each player's highest checkout and subs), finance (the balance and headline figures, with a page each for subs received, subs owed and expenses), past seasons.
 - **Admin** (`/admin`, one login: username `admin`): players, fixtures, results, expenses, subs payments, settings, season reset. When logged in, the public pages also show Edit buttons on results.
 
 Built the same way as the Kind booking site: Laravel, Blade, server-rendered forms, one shared login, public pages and admin reading the same database. No emails, queue or scheduler, and no Node build: the CSS and JS are plain files in `public/`.
@@ -16,6 +16,7 @@ Built the same way as the Kind booking site: Laravel, Blade, server-rendered for
 - Submitting a week closes it: fixtures in it with no result become **catch-ups**. "No results this week" does the same for all of them.
 - The Home page's "Week N" stays on the first week whose results haven't been submitted. It shows a **Results pending** tag after 10pm on league night (`config/league.php`).
 - Subs are due from each league night's date for every player, played or not, including nights with no results. Weeks off have no league night and no subs. Payments are recorded as amounts (Admin › Subs), in any size, and cover a player's oldest unpaid weeks first, so £5 at £2 a night is two weeks and half of a third. What someone owes is what's due so far minus everything they've paid; paying ahead shows as being ahead.
+- Pages that show who has paid say "Subs last updated 8th November", the date the admin last recorded or deleted a payment, so people who have paid aren't confused if it isn't showing yet.
 - The three league rules (points for a win, points for a loss, subs per night) can each be cleared in Settings. The public site shows "Coming soon" until all three are set.
 - Fixtures: a valid round robin, ordered so strong-v-strong matches (rank × rank, squared) come last. With an odd number of players someone has a bye each week. Set a maximum number of league nights below a full season and some players play twice on a night.
 - Resetting a season keeps its final table and results (public, under Past seasons), carries the money balance forward, and starts fresh. A season can also be deleted permanently (Admin › Season) to clear out test data.

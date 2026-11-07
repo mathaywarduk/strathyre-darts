@@ -80,6 +80,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .stats3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px 16px; }
 .stats3.tight { gap: 16px; margin-top: 20px; }
 .stat-n { font-size: 22px; font-weight: 700; }
+.stat-link { display: block; color: inherit; text-decoration: none; }
+.stat-link:hover .mute { color: var(--fg); text-decoration: underline; text-underline-offset: 4px; }
 .owed { font-size: 22px; font-weight: 700; color: var(--owed); }
 .owed-text { color: var(--owed); }
 
@@ -112,6 +114,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .badge { display: inline-block; color: #000; font-size: 12px; font-weight: 700; line-height: 1; padding: 4px 7px; border-radius: 3px; white-space: nowrap; }
 .badge.w { background: var(--women); }
 .badge.m { background: var(--men); }
+.badge.co { background: #fff; }
 .res-w { background: var(--fg); color: var(--bg); font-weight: 700; padding: 3px 8px; border-radius: 3px; font-size: 14px; }
 .res-l { border: 1px solid var(--btn-border); color: var(--btn-fg); padding: 2px 7px; border-radius: 3px; font-size: 14px; }
 
@@ -200,3 +203,31 @@ tr.lead-m { background: #6cc4ff1f; }
 tr.lead-w .nm { color: var(--women); font-weight: 700; }
 tr.lead-m .nm { color: var(--men); font-weight: 700; }
 tr .nm { font-weight: 500; }
+
+/* The top three in the league table get bigger */
+.tbl tr.p1 { font-size: 30px; }
+.tbl tr.p1 td { height: 80px; }
+.tbl tr.p2 { font-size: 25px; }
+.tbl tr.p2 td { height: 68px; }
+.tbl tr.p3 { font-size: 21px; }
+.tbl tr.p3 td { height: 58px; }
+.tbl tr.p1 .nm, .tbl tr.p2 .nm, .tbl tr.p3 .nm { font-weight: 700; }
+
+/* Highest checkout: a white card so it stands out on the black page */
+.checkout-card { display: flex; align-items: center; gap: 20px; background: #fff; color: #000; border-radius: 4px; padding: 20px; }
+.cc-circle { flex: 0 0 auto; display: flex; align-items: center; justify-content: center; width: 112px; height: 112px; border-radius: 50%; background: #d8382d; color: #fff; font-family: var(--font-cond); font-weight: 700; font-size: 56px; line-height: 1; }
+.cc-text { min-width: 0; }
+.cc-label { font-size: 14px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.cc-who { margin-top: 6px; font-size: 22px; font-weight: 700; line-height: 1.25; }
+.checkout-card a { color: #000; }
+.cc-who .wk { color: #555; font-size: 16px; font-weight: 500; white-space: nowrap; }
+
+/* A short note on a public page */
+.notice { margin: 8px 0 0; padding: 12px 16px; border: 1px solid var(--btn-border); border-radius: 4px; }
+
+/* League table badges: initials on a phone (WL, ML, HC) */
+.badge .b-short { display: none; }
+@media (max-width: 480px) {
+    .badge .b-long { display: none; }
+    .badge .b-short { display: inline; }
+}

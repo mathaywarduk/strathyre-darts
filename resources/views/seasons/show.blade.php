@@ -47,9 +47,15 @@
     @endphp
     @if ($best)
         <section class="sec">
-            <div class="mute">Highest checkout</div>
-            <div class="big" style="font-size: 72px; margin-top: 4px">{{ $best['checkout'] }}</div>
-            <div style="margin-top: 6px">{{ implode(', ', $best['names']) }}</div>
+            <div class="checkout-card">
+                <div class="cc-circle">{{ $best['checkout'] }}</div>
+                <div class="cc-text">
+                    <div class="cc-label">Highest checkout</div>
+                    @foreach ($best['names'] as $who)
+                        <div class="cc-who">{{ $who }}</div>
+                    @endforeach
+                </div>
+            </div>
         </section>
     @endif
 

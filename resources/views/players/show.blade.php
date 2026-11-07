@@ -15,6 +15,7 @@
         <h1 class="page-title" style="color: {{ $accent }}">{{ $player->name }}</h1>
         @if ($isW)<p><span class="badge w">Women’s leader</span></p>@endif
         @if ($isM)<p><span class="badge m">Men’s leader</span></p>@endif
+        @if ($holdsBestCheckout)<p><span class="badge co">Highest checkout</span></p>@endif
     </section>
 
     <section style="padding-top: 24px">
@@ -86,7 +87,8 @@
             <span style="display: inline-block; width: 20px"></span>
             <span class="mute">Owes:</span> <strong @class(['owed-text' => $subs['owed'] > 0])>{{ Money::format($subs['owed']) }}</strong>
         </p>
-        <div class="week-grid">
+        @include('partials.subs-updated', ['updated' => $subsUpdated])
+        <div class="week-grid" style="margin-top: 14px">
             @foreach ($subs['cells'] as $cell)
                 <a class="week-btn {{ $cell['paid'] ? 'paid' : '' }}" href="{{ route('finance.week', $cell['night']->week) }}" aria-label="Week {{ $cell['night']->week }}, {{ $cell['paid'] ? 'paid' : 'not paid in full' }}"><small>Week</small>{{ $cell['night']->week }}</a>
             @endforeach

@@ -148,7 +148,7 @@ class FinanceTest extends TestCase
 
         $this->get(route('admin.subs'))->assertOk()
             ->assertSee('£3.00')->assertSee('£4.00')->assertDontSee('paid up')->assertDontSee('· owes')
-            ->assertSee('Recent payments')->assertSee('20 Nov')
+            ->assertSee('Recent payments')->assertSee('20 Nov')->assertDontSee('Copy to send')
             ->assertSee('£1.00');
         $this->get(route('admin.subs', ['player' => $this->player('Bob B')->id]))->assertSee('selected', false);
 
@@ -164,33 +164,92 @@ class FinanceTest extends TestCase
         $this->pay($this->player(), '3');
         auth()->logout();
 
-        $this->get('/finance')->assertOk()->assertSee('Subs owed')->assertSee('Income from subs')
+        $this->get('/finance')->assertOk()->assertSee('Balance')
+            ->assertSee(route('finance.received'))->assertSee(route('finance.owed'))->assertSee(route('finance.expenses'));
+        $this->get('/finance/subs-received')->assertOk()->assertSee('Week by week')
             ->assertSee('Alice A (£1.00 paid)', false)->assertSee('£1.00');
+        $this->get('/finance/subs-owed')->assertOk()->assertSee('Bob B')->assertDontSee('Record a payment');
+        $this->get('/finance/expenses')->assertOk()->assertSee('No expenses yet');
         $this->get('/finance/weeks/1')->assertOk()->assertSee('Not paid (19)')->assertDontSee('Record a payment');
         $this->get('/finance/weeks/2')->assertOk()->assertSee('Owes £1.00')->assertSee('part-paid');
         $this->get('/finance/weeks/3')->assertRedirect(route('finance.index')); // not due yet
         $this->get('/')->assertSee('Finance');
     }
 
-    public function test_admins_get_links_to_record_payments_from_the_finance_pages(): void
+    public function test_the_finance_page_is_only_the_headline_numbers(): void
+    {
+        $this->travelTo('2026-11-21 09:00');
+        $this->pay($this->player(), '3');
+        auth()->logout();
+
+        $this->get('/finance')->assertOk()
+            ->assertSee('Subs received')->assertSee('Subs owed')->assertSee('Expenses')
+            ->assertDontSee('Week by week')->assertDontSee('Bob B');
+    }
+
+    public function test_admins_get_links_to_record_payments_from_the_detail_pages(): void
     {
         $this->travelTo('2026-11-14 09:00');
 
-        $this->get('/finance')->assertSee(route('admin.subs'));
+        $this->get('/finance/subs-owed')->assertSee(route('admin.subs'));
         $this->get('/finance/weeks/1')->assertSee(route('admin.subs'));
+        $this->get('/finance/expenses')->assertSee(route('admin.expenses.index'));
     }
 
-    public function test_finance_page_shows_balance_owing_income_and_expenses(): void
+    public function test_finance_shows_balance_and_each_detail_page_its_own_figures(): void
     {
         $this->travelTo('2026-11-21 09:00');
         $this->pay($this->player(), '2');
         $this->post(route('admin.expenses.store'), ['item' => 'New dartboard', 'cost' => '45', 'spent_on' => '2026-11-10'])->assertRedirect();
         auth()->logout();
 
-        $this->get('/finance')->assertOk()
-            ->assertSee('-£43.00') // £2.00 received less £45.00 spent
-            ->assertSee('New dartboard')
-            ->assertSee('£45.00');
+        $this->get('/finance')->assertOk()->assertSee('-£43.00')->assertSee('£45.00')->assertSee('£2.00');
+        $this->get('/finance/expenses')->assertOk()->assertSee('New dartboard')->assertSee('£45.00')->assertSee('10 Nov');
+        $this->get('/finance/subs-received')->assertSee('£2.00');
+    }
+
+    public function test_the_player_page_back_link_follows_where_you_came_from(): void
+    {
+        $this->travelTo('2026-11-21 09:00');
+        $alice = $this->player();
+
+        $this->get(route('players.show', [$alice, 'from' => 'owed']))->assertSee('Back to subs owed')->assertSee(route('finance.owed'));
+        $this->get(route('players.show', [$alice, 'from' => 'week.2']))->assertSee('Back to week 2 subs');
+        $this->get(route('players.show', $alice))->assertSee('Back to league table');
+    }
+
+    public function test_pages_showing_what_has_been_paid_say_when_subs_were_last_updated(): void
+    {
+        $alice = $this->player();
+        $this->travelTo('2026-11-21 09:00');
+        auth()->logout();
+        foreach (['/finance', '/finance/subs-received', '/finance/subs-owed', '/finance/weeks/1'] as $url) {
+            $this->get($url)->assertOk()->assertDontSee('Subs last updated');
+        }
+
+        $this->travelTo('2026-11-08 18:00');
+        $this->actingAs($this->admin());
+        $this->pay($alice, '2', '2026-11-08');
+        $this->travelTo('2026-11-21 09:00');
+        auth()->logout();
+
+        foreach (['/finance', '/finance/subs-received', '/finance/subs-owed', '/finance/weeks/1', route('players.show', $alice)] as $url) {
+            $this->get($url)->assertOk()->assertSee('Subs last updated 8th November');
+        }
+        $this->get('/finance/expenses')->assertDontSee('Subs last updated');
+    }
+
+    public function test_deleting_a_payment_also_counts_as_an_update(): void
+    {
+        $this->travelTo('2026-11-08 18:00');
+        $this->pay($this->player(), '2', '2026-11-08');
+
+        $this->travelTo('2026-11-12 10:00');
+        $this->delete(route('admin.subs.destroy', SubsPayment::first()));
+        $this->travelTo('2026-11-21 09:00');
+        auth()->logout();
+
+        $this->get('/finance')->assertSee('Subs last updated 12th November');
     }
 
     public function test_owing_lists_the_biggest_debts_first(): void

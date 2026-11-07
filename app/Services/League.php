@@ -186,6 +186,14 @@ final class League
         ];
     }
 
+    /** @return list<int> everyone who has hit the league's best checkout */
+    public function bestCheckoutPlayerIds(): array
+    {
+        $best = $this->bestCheckout();
+
+        return $best ? $best['fixtures']->map(fn (Fixture $f) => $f->result->winner_id)->unique()->values()->all() : [];
+    }
+
     /** A player's best winning checkout, or null if they haven't won yet */
     public function highestCheckout(int $playerId): ?int
     {

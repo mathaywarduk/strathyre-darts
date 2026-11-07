@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Season extends Model
 {
-    protected $fillable = ['starts_on', 'status', 'max_weeks', 'weeks_off', 'opening_pence', 'closing_pence', 'ended_on', 'snapshot'];
+    protected $fillable = ['starts_on', 'status', 'max_weeks', 'weeks_off', 'opening_pence', 'closing_pence', 'ended_on', 'snapshot', 'subs_updated_at'];
 
     protected function casts(): array
     {
@@ -17,6 +17,7 @@ class Season extends Model
             'ended_on' => 'date',
             'weeks_off' => 'array',
             'snapshot' => 'array',
+            'subs_updated_at' => 'datetime',
         ];
     }
 

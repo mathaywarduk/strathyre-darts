@@ -18,6 +18,12 @@ final class Dates
         return $d->format('j M');
     }
 
+    /** 8th November */
+    public static function dayMonth(CarbonInterface $d): string
+    {
+        return self::ordinal($d->day).' '.$d->format('F');
+    }
+
     public static function ordinal(int $n): string
     {
         $s = ['th', 'st', 'nd', 'rd'];

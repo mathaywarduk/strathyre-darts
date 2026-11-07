@@ -28,6 +28,8 @@ class PlayerController extends Controller
         $back = ['url' => route('home'), 'label' => 'Back to league table', 'section' => 'league'];
         if ($from === 'finance') {
             $back = ['url' => route('finance.index'), 'label' => 'Back to finance', 'section' => 'finance'];
+        } elseif ($from === 'owed') {
+            $back = ['url' => route('finance.owed'), 'label' => 'Back to subs owed', 'section' => 'finance'];
         } elseif (preg_match('/^week\.(\d+)$/', $from, $m)) {
             $back = ['url' => route('finance.week', $m[1]), 'label' => "Back to week {$m[1]} subs", 'section' => 'finance'];
         }
@@ -45,7 +47,9 @@ class PlayerController extends Controller
             'upcoming' => $fixtures->filter(fn ($f) => $league->isUpcoming($f))->values(),
             'results' => $fixtures->filter(fn ($f) => $f->result)->reverse()->values(),
             'highestCheckout' => $league->highestCheckout($player->id),
+            'holdsBestCheckout' => in_array($player->id, $league->bestCheckoutPlayerIds(), true),
             'subs' => (new Finance($league))->player($player->id),
+            'subsUpdated' => $league->season->subs_updated_at,
         ]);
     }
 }

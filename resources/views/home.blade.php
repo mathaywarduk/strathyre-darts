@@ -1,25 +1,14 @@
 @use('App\Support\Dates')
 @php
     $catchText = $catchUps->count() === 0 ? 'no catch-ups to play' : $catchUps->count().' '.\Illuminate\Support\Str::plural('catch-up', $catchUps->count()).' to play';
-    $progress = $league->weeksPlayed().' of '.$league->totalWeeks().' weeks played, '.$catchText;
+    $progress = $night
+        ? $league->weeksPlayed().' of '.$league->totalWeeks().' weeks played, '.$catchText
+        : 'All '.$league->totalWeeks().' weeks played, '.$catchText;
 @endphp
 <x-layouts.site>
-    <section class="hero">
-        @if ($night)
-            <div class="hero-big">Week {{ $night->week }}</div>
-            <p>{{ Dates::long($night->date) }}
-                @if ($pending)
-                    <span class="tag" style="margin-left: 8px; vertical-align: middle">Results pending</span>
-                @endif
-            </p>
-        @else
-            <div class="hero-big descend">Season complete</div>
-        @endif
-        <p class="mute">{{ $progress }}</p>
-    </section>
-
-    <section class="sec first">
+    <section style="padding-top: 16px">
         <h2 class="h2">League table</h2>
+        <p class="sub">{{ $progress }}</p>
         <div style="overflow-x: auto">
             <table class="tbl">
                 <thead>
@@ -31,19 +20,25 @@
                     </tr>
                 </thead>
                 <tbody>
+                    @php
+                        $started = $table->contains(fn ($r) => $r['played'] > 0);
+                    @endphp
                     @foreach ($table as $r)
                         @php
                             $id = $r['player']->id;
                             $isW = $leaders['W'] === $id;
                             $isM = $leaders['M'] === $id;
                         @endphp
-                        <tr @class(['lead-w' => $isW, 'lead-m' => $isM])>
+                        {{-- The top three stand out once play has started --}}
+                        <tr @class(['lead-w' => $isW, 'lead-m' => $isM, 'p1' => $started && $r['pos'] === 1, 'p2' => $started && $r['pos'] === 2, 'p3' => $started && $r['pos'] === 3])>
                             <td style="color: var(--mute)">{{ $r['pos'] }}{{ $r['tied'] ? '=' : '' }}</td>
                             <td class="l">
                                 <div class="namecell">
                                     <a class="nm" href="{{ route('players.show', $r['player']) }}">{{ $r['player']->name }}</a>
-                                    @if ($isW)<span class="badge w">Women’s leader</span>@endif
-                                    @if ($isM)<span class="badge m">Men’s leader</span>@endif
+                                    {{-- On a phone these shrink to initials so the name keeps its room --}}
+                                    @if ($isW)<span class="badge w" title="Women’s leader"><span class="b-long">Women’s leader</span><span class="b-short" aria-hidden="true">WL</span></span>@endif
+                                    @if ($isM)<span class="badge m" title="Men’s leader"><span class="b-long">Men’s leader</span><span class="b-short" aria-hidden="true">ML</span></span>@endif
+                                    @if (in_array($id, $bestCheckoutIds, true))<span class="badge co" title="Highest checkout"><span class="b-long">Highest checkout</span><span class="b-short" aria-hidden="true">HC</span></span>@endif
                                 </div>
                             </td>
                             <td>{{ $r['played'] }}</td>
@@ -60,20 +55,26 @@
 
     @if ($bestCheckout)
         <section class="sec">
-            <div class="mute">Highest checkout</div>
-            <div class="big" style="font-size: 72px; margin-top: 4px">{{ $bestCheckout['checkout'] }}</div>
-            <div style="margin-top: 6px">
-                @foreach ($bestCheckout['fixtures'] as $f)
-                    @if (! $loop->first)<span class="mute">·</span> @endif<a href="{{ route('players.show', $f->result->winner_id) }}">{{ $league->name($f->result->winner_id) }}</a> <span class="mute">(week {{ $f->night->week }})</span>
-                @endforeach
+            <div class="checkout-card">
+                <div class="cc-circle">{{ $bestCheckout['checkout'] }}</div>
+                <div class="cc-text">
+                    <div class="cc-label">Highest checkout</div>
+                    @foreach ($bestCheckout['fixtures'] as $f)
+                        <div class="cc-who"><a href="{{ route('players.show', $f->result->winner_id) }}">{{ $league->name($f->result->winner_id) }}</a> <span class="wk">(week {{ $f->night->week }})</span></div>
+                    @endforeach
+                </div>
             </div>
         </section>
     @endif
 
     @if ($night)
         <section class="sec">
-            <h2 class="h2">Next week</h2>
-            <p class="sub">Week {{ $night->week }}, {{ Dates::long($night->date) }}</p>
+            <h2 class="h2">Week {{ $night->week }}</h2>
+            <p class="sub">{{ Dates::long($night->date) }}
+                @if ($pending)
+                    <span class="tag" style="margin-left: 8px; vertical-align: middle">Results pending</span>
+                @endif
+            </p>
             @foreach ($nextFixtures as $f)
                 <div class="line">
                     <span>{{ $league->name($f->player1_id) }} <span class="v">v</span> {{ $league->name($f->player2_id) }}</span>
@@ -85,35 +86,6 @@
             @endif
         </section>
     @endif
-
-    <section class="sec">
-        <h2 class="h2">Last week’s results</h2>
-        @if ($last)
-            <p class="sub">Week {{ $last->week }}, {{ Dates::long($last->date) }}</p>
-            @forelse ($lastResults as $f)
-                @php($res = $f->result)
-                <div class="line">
-                    <span>
-                        <span style="font-weight: 700">{{ $league->name($res->winner_id) }}</span>
-                        <span class="v">beat</span> {{ $league->name($res->loserId()) }}
-                        @if ($f->night->week !== $last->week)
-                            <span class="mute">(week {{ $f->night->week }})</span>
-                        @endif
-                    </span>
-                    <span class="right">
-                        <span><span class="mute">Checkout:</span> <strong>{{ $res->checkout }}</strong></span>
-                        @auth
-                            <a class="ed" href="{{ route('admin.results.edit', [$res, 'back' => request()->getRequestUri()]) }}" aria-label="Edit result: {{ $league->name($res->winner_id) }} v {{ $league->name($res->loserId()) }}">Edit</a>
-                        @endauth
-                    </span>
-                </div>
-            @empty
-                <p style="margin: 8px 0 0">{{ $last->no_results ? 'No matches were played. They’re all catch-ups now.' : 'No results entered.' }}</p>
-            @endforelse
-        @else
-            <p class="sub">No results yet.</p>
-        @endif
-    </section>
 
     <section class="sec">
         <h2 class="h2">Catch-up fixtures</h2>

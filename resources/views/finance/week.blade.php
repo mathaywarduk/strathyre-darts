@@ -1,10 +1,11 @@
 @use('App\Support\Dates')
 @use('App\Support\Money')
 <x-layouts.site :title="'Week '.$night->week.' subs'" section="finance">
-    <div style="padding-top: 8px"><a class="back" href="{{ route('finance.index') }}">Back to finance</a></div>
+    <div style="padding-top: 8px"><a class="back" href="{{ route('finance.received') }}">Back to subs received</a></div>
     <section class="hero" style="padding-top: 16px">
         <h1 class="page-title">Week {{ $night->week }} subs</h1>
         <p class="mute" style="margin: 8px 0 0; font-size: 16px">{{ Dates::long($night->date) }}</p>
+        @include('partials.subs-updated', ['updated' => $finance->league->season->subs_updated_at])
         <div class="stats3 tight">
             <div><div class="stat-n">{{ Money::format($week['received']) }}</div><div class="mute">Received</div></div>
             <div><div class="stat-n">{{ Money::format($week['expected']) }}</div><div class="mute">Due</div></div>

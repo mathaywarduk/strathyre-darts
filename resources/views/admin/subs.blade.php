@@ -42,12 +42,6 @@
         @empty
             <p>Nobody owes anything.</p>
         @endforelse
-        @if ($owing->isNotEmpty())
-            <div style="margin-top: 24px">
-                <label class="label" for="text">Copy to send</label>
-                <textarea class="field" id="text" readonly style="min-height: 120px" onclick="this.select()">{{ $text }}</textarea>
-            </div>
-        @endif
     </section>
 
     <section class="sec">
