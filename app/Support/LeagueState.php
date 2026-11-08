@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\Notice;
 use App\Models\Player;
 use App\Models\Season;
 use App\Models\Setting;
@@ -12,13 +13,15 @@ use App\Models\Setting;
  */
 final class LeagueState
 {
-    /** @return array{hasSeason: bool, leagueLive: bool} */
+    /** @return array{hasSeason: bool, leagueLive: bool, hasRules: bool, hasNotices: bool} */
     public static function flags(): array
     {
         $season = Season::current();
         $settings = Setting::query()->first();
 
         return [
+            'hasRules' => RichText::hasContent($settings?->rules_html),
+            'hasNotices' => Notice::active()->exists(),
             'hasSeason' => (bool) $season,
             'leagueLive' => $season
                 && $settings?->isComplete()

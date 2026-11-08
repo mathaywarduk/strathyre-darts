@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 /** League rules. One row; null = not chosen yet. */
 class Setting extends Model
 {
-    protected $fillable = ['win_points', 'loss_points', 'subs_pence'];
+    protected $fillable = ['win_points', 'loss_points', 'subs_pence', 'rules_html'];
 
     public static function current(): self
     {

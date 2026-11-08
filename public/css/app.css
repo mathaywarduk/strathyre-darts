@@ -16,6 +16,8 @@
     --field-bg: #111;
     --women: #ffb547;
     --men: #6cc4ff;
+    --link: #6cc4ff;
+    --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1.5l6 6 6-6' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     --font: 'Barlow', system-ui, sans-serif;
     --font-cond: 'Barlow Condensed', sans-serif;
 }
@@ -32,6 +34,8 @@ body.light {
     --btn-fg: #2a2a2a;
     --hover: #444;
     --field-bg: #fff;
+    --link: #0b5cad;
+    --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1.5l6 6 6-6' fill='none' stroke='%230a0a0a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -59,8 +63,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 /* Header and nav */
 .site-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding-bottom: 8px; }
 .brand { font-family: var(--font-cond); font-weight: 700; font-size: 22px; letter-spacing: .01em; text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; }
-.nav { display: flex; gap: 20px; }
-.nav a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: none; color: var(--mute); font-weight: 500; border-bottom: 2px solid transparent; }
+.nav { display: flex; flex-wrap: wrap; column-gap: 20px; }
+.nav a { white-space: nowrap; display: inline-flex; align-items: center; min-height: 44px; text-decoration: none; color: var(--mute); font-weight: 500; border-bottom: 2px solid transparent; }
 .nav a[aria-current] { color: var(--fg); font-weight: 600; border-bottom-color: var(--fg); }
 
 /* Type */
@@ -147,7 +151,7 @@ body.light .week-btn.paid { color: #7a766c; }
 .label { display: block; font-weight: 600; margin-bottom: 4px; }
 .field { width: 100%; min-height: 44px; padding: 8px 12px; background: var(--field-bg); border: 1px solid var(--fg); border-radius: 3px; }
 textarea.field { min-height: 160px; font-family: ui-monospace, Menlo, monospace; font-size: 15px; line-height: 1.5; }
-select.field { appearance: auto; }
+select.field { appearance: none; -webkit-appearance: none; padding-right: 44px; background-image: var(--chevron); background-repeat: no-repeat; background-position: right 16px center; background-size: 14px 9px; }
 /* Date inputs ignore width on iOS and push past the edge unless told off */
 input[type="date"].field { -webkit-appearance: none; appearance: none; display: block; min-width: 0; max-width: 100%; text-align: left; }
 input[type="date"].field::-webkit-date-and-time-value { text-align: left; min-height: 1.4em; }
@@ -276,3 +280,38 @@ tr .nm { font-weight: 500; }
     .pcol-a, .pcol-b { display: block; }
     .pc-fixtures { padding-top: 24px; }
 }
+
+/* ---------------------------------------------------------------------- */
+/* Formatted text (rules, notices) and its editor                          */
+
+.rich { line-height: 1.55; overflow-wrap: anywhere; }
+.rich p { margin: 0 0 1em; }
+.rich > :last-child { margin-bottom: 0; }
+.rich ul, .rich ol { margin: 0 0 1em; padding-left: 1.4em; }
+.rich li { margin: .25em 0; }
+.rich hr { border: 0; border-top: 1px solid var(--line-strong); margin: 1.6em 0; }
+.rich a { color: var(--link); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.rich a:hover { color: var(--link); text-decoration-style: dotted; }
+.rich u { text-decoration-thickness: 1px; text-underline-offset: 3px; } /* plain underlining stays the text colour, so a link is the only coloured text */
+
+.rte-toolbar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.rte-toolbar[hidden], .rte-area[hidden], .rte-source[hidden] { display: none; }
+.rte-toolbar button { min-height: 40px; min-width: 44px; padding: 0 12px; background: var(--field-bg); color: var(--fg); border: 1px solid var(--btn-border); border-radius: 3px; font-weight: 600; cursor: pointer; }
+.rte-toolbar button:hover { border-color: var(--fg); }
+.rte-toolbar button[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.rte-area { min-height: 260px; padding: 12px; font-family: var(--font); line-height: 1.55; }
+.rte-area:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+.rte-source { font-family: ui-monospace, Menlo, monospace; }
+
+/* Results and fixtures: one week at a time */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.weekpick { margin: 16px 0 12px; }
+.weekpick .field { max-width: 280px; }
+.weeknav { display: grid; grid-template-columns: 48px minmax(0, 1fr) 48px; align-items: center; gap: 12px; padding: 8px 0 16px; }
+.wn-title { text-align: center; }
+.wn-btn { touch-action: manipulation; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 50%; background: var(--line); color: var(--fg); font-size: 28px; line-height: 1; text-decoration: none; padding-bottom: 3px; }
+a.wn-btn:hover { background: var(--line-strong); color: var(--fg); }
+.wn-btn.off { opacity: .3; }
+.line.fx-unplayed { background: rgba(255, 255, 255, .08); border-left: 3px solid var(--fg); padding: 0 0 0 12px; } /* flush right, so Add result lines up with Edit */
+
+#week-panel[aria-busy="true"] .weeknav .wn-title, #week-panel[aria-busy="true"] section { opacity: .6; transition: opacity .15s; }

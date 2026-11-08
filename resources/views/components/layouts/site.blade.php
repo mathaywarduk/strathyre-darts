@@ -21,8 +21,10 @@
         @php
             $links = array_filter([
                 ['League', route('home'), 'league'],
-                $leagueLive ? ['Results', route('results.index'), 'results'] : null,
+                $leagueLive ? ['Results and fixtures', route('results.index'), 'results'] : null,
                 $leagueLive ? ['Finance', route('finance.index'), 'finance'] : null,
+                $hasNotices ? ['Notices', route('notices'), 'notices'] : null,
+                $hasRules ? ['Rules', route('rules'), 'rules'] : null,
                 auth()->check() ? ['Admin', route('admin.dashboard'), 'admin'] : null,
             ]);
         @endphp

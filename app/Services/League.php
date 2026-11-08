@@ -242,6 +242,21 @@ final class League
         return $this->nights->filter(fn (LeagueNight $n) => $n->isSubmitted())->last();
     }
 
+    /**
+     * The week to show by default: the one whose league night falls in the current
+     * Monday to Sunday, played yet or not. Failing that (a week off), the next night;
+     * once the season is over, the last.
+     */
+    public function currentWeekNight(CarbonInterface $now): ?LeagueNight
+    {
+        $start = $now->copy()->startOfWeek();
+        $end = $now->copy()->endOfWeek();
+
+        return $this->nights->first(fn (LeagueNight $n) => $n->date->between($start, $end))
+            ?? $this->nights->first(fn (LeagueNight $n) => $n->date->gt($end))
+            ?? $this->nights->last();
+    }
+
     public function weeksPlayed(): int
     {
         return $this->nights->filter(fn (LeagueNight $n) => $n->isSubmitted())->count();

@@ -12,6 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&amp;family=Barlow:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ filemtime(public_path('css/app.css')) }}">
     <script src="{{ asset('js/admin.js') }}?v={{ filemtime(public_path('js/admin.js')) }}" defer></script>
+    <script src="{{ asset('js/editor.js') }}?v={{ filemtime(public_path('js/editor.js')) }}" defer></script>
 </head>
 <body class="light">
 <div class="wrap wide">
@@ -36,6 +37,8 @@
                 ['Fixtures', 'admin.fixtures.*', 'admin.fixtures.index', $hasSeason],
                 ['Expenses', 'admin.expenses.*', 'admin.expenses.index', $hasSeason],
                 ['Subs', 'admin.subs*', 'admin.subs', $leagueLive],
+                ['Notices', 'admin.notices.*', 'admin.notices.index', true],
+                ['Rules', 'admin.rules.*', 'admin.rules.edit', true],
                 ['Settings', 'admin.settings.*', 'admin.settings.edit', true],
                 ['Season', 'admin.season.*', 'admin.season.index', true],
             ] as [$label, $pattern, $route, $show])

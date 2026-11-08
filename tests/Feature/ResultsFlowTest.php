@@ -127,7 +127,7 @@ class ResultsFlowTest extends TestCase
 
         $this->assertTrue($night->fresh()->no_results);
         $this->get('/')->assertSee('Week 2')->assertSee('10 catch-ups to play');
-        $this->get('/results')->assertSee('No results yet');
+        $this->get('/results?week=1')->assertSee('Postponed');
     }
 
     public function test_editing_a_result_changes_the_winner_and_the_points_left(): void

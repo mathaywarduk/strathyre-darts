@@ -53,10 +53,10 @@ class AccessTest extends TestCase
         auth()->logout();
 
         $this->get('/')->assertOk()->assertDontSee('>Admin<', false)->assertSee('Week 2');
-        $this->get('/results')->assertOk()->assertDontSee('>Edit<', false);
+        $this->get('/results?week=1')->assertOk()->assertDontSee('>Edit<', false);
 
         $this->actingAs($this->admin());
         $this->get('/')->assertSee('>Admin<', false);
-        $this->get('/results')->assertSee('>Edit<', false);
+        $this->get('/results?week=1')->assertSee('>Edit<', false);
     }
 }

@@ -3,8 +3,10 @@
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\NoticesController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\ResultsController;
+use App\Http\Controllers\RulesController;
 use App\Http\Controllers\SeasonArchiveController;
 use Illuminate\Support\Facades\Route;
 
@@ -13,6 +15,8 @@ use Illuminate\Support\Facades\Route;
 */
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('results', [ResultsController::class, 'index'])->name('results.index');
+Route::get('rules', [RulesController::class, 'show'])->name('rules');
+Route::get('notices', [NoticesController::class, 'index'])->name('notices');
 Route::get('players/{player}', [PlayerController::class, 'show'])->name('players.show');
 Route::get('seasons', [SeasonArchiveController::class, 'index'])->name('seasons.index');
 Route::get('seasons/{season}', [SeasonArchiveController::class, 'show'])->name('seasons.show');
@@ -57,6 +61,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('results/preview', [Admin\ResultController::class, 'preview'])->name('results.preview');
         Route::post('results/save', [Admin\ResultController::class, 'save'])->name('results.save');
         Route::post('results/back', [Admin\ResultController::class, 'back'])->name('results.back');
+        Route::get('results/fixture/{fixture}', [Admin\ResultController::class, 'create'])->name('results.create');
+        Route::post('results/fixture/{fixture}', [Admin\ResultController::class, 'store'])->name('results.store');
         Route::get('results/{result}/edit', [Admin\ResultController::class, 'edit'])->name('results.edit');
         Route::put('results/{result}', [Admin\ResultController::class, 'update'])->name('results.update');
         Route::delete('results/{result}', [Admin\ResultController::class, 'destroy'])->name('results.destroy');
@@ -66,6 +72,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('expenses/{expense}', [Admin\ExpenseController::class, 'edit'])->name('expenses.edit');
         Route::put('expenses/{expense}', [Admin\ExpenseController::class, 'update'])->name('expenses.update');
         Route::delete('expenses/{expense}', [Admin\ExpenseController::class, 'destroy'])->name('expenses.destroy');
+
+        Route::get('rules', [Admin\RulesController::class, 'edit'])->name('rules.edit');
+        Route::put('rules', [Admin\RulesController::class, 'update'])->name('rules.update');
+        Route::resource('notices', Admin\NoticeController::class)->except(['show']);
 
         Route::get('subs', [Admin\SubsController::class, 'index'])->name('subs');
         Route::post('subs', [Admin\SubsController::class, 'store'])->name('subs.store');

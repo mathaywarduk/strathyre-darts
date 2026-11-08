@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Fixture;
 use App\Models\Result;
 use App\Models\Season;
 use App\Models\Setting;
@@ -87,6 +88,60 @@ class ResultController extends Controller
     {
         return redirect()->route('admin.results.index', ['week' => $request->input('week')])
             ->withInput(['lines' => $request->input('lines')]);
+    }
+
+    /** Add the result of one fixture straight from the Results and fixtures page. */
+    public function create(Request $request, Fixture $fixture): View|RedirectResponse
+    {
+        $league = $this->league();
+        $fixture = $league->fixtures->firstWhere('id', $fixture->id);
+        abort_unless($fixture, 404);
+        $back = Dates::safePath($request->query('back'), route('results.index', [], false));
+
+        if ($fixture->result) {
+            return redirect()->route('admin.results.edit', [$fixture->result, 'back' => $back]);
+        }
+
+        return view('admin.results.create', ['league' => $league, 'fixture' => $fixture, 'back' => $back]);
+    }
+
+    public function store(Request $request, Fixture $fixture): RedirectResponse
+    {
+        $league = $this->league();
+        $fixture = $league->fixtures->firstWhere('id', $fixture->id);
+        abort_unless($fixture, 404);
+        $back = Dates::safePath($request->input('back'), route('results.index', [], false));
+
+        if ($fixture->result) {
+            return redirect()->route('admin.results.edit', [$fixture->result, 'back' => $back])
+                ->withErrors(['result' => 'That match already has a result. You can change it here.']);
+        }
+
+        $min = (int) config('league.min_checkout');
+        $max = (int) config('league.max_checkout');
+        $data = $request->validate([
+            'winner_id' => ['required', Rule::in([$fixture->player1_id, $fixture->player2_id])],
+            'checkout' => ['required', 'integer', "between:{$min},{$max}"],
+        ], [
+            'winner_id.required' => 'Choose who won.',
+            'winner_id.in' => 'Choose one of the two players.',
+            'checkout.between' => "The checkout must be a whole number from {$min} to {$max}.",
+            'checkout.integer' => "The checkout must be a whole number from {$min} to {$max}.",
+        ]);
+
+        Result::create([
+            'fixture_id' => $fixture->id,
+            'winner_id' => $data['winner_id'],
+            'checkout' => $data['checkout'],
+            'submitted_night_id' => $fixture->league_night_id,
+        ]);
+        if ($fixture->night->no_results) {
+            $fixture->night->update(['no_results' => false]); // a result has now been played that week
+        }
+
+        $winner = (int) $data['winner_id'];
+
+        return redirect($back)->with('status', 'Result added: '.$league->name($winner).' beat '.$league->name($fixture->opponentOf($winner)).'.');
     }
 
     public function edit(Request $request, Result $result): View
