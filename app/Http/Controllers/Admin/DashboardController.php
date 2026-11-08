@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Season;
 use App\Models\Setting;
+use App\Models\Tournament;
 use App\Services\League;
 use App\Support\LeagueState;
 use Illuminate\View\View;
@@ -28,6 +29,7 @@ class DashboardController extends Controller
             'live' => (bool) $league?->isLive(),
             'night' => $night,
             'due' => $night && $night->date->lte(today()),
+            'doublesRunning' => (bool) Tournament::running(),
             'catchUps' => $league ? $league->catchUps()->count() : 0,
         ]);
     }

@@ -6,6 +6,7 @@ use App\Models\Notice;
 use App\Models\Player;
 use App\Models\Season;
 use App\Models\Setting;
+use App\Models\Tournament;
 
 /**
  * How far set up the league is, so links to pages that can't work yet stay hidden.
@@ -13,13 +14,14 @@ use App\Models\Setting;
  */
 final class LeagueState
 {
-    /** @return array{hasSeason: bool, leagueLive: bool, hasRules: bool, hasNotices: bool} */
+    /** @return array{hasSeason: bool, leagueLive: bool, hasRules: bool, hasNotices: bool, tournamentRunning: bool} */
     public static function flags(): array
     {
         $season = Season::current();
         $settings = Setting::query()->first();
 
         return [
+            'tournamentRunning' => Tournament::query()->where('status', 'running')->exists(),
             'hasRules' => RichText::hasContent($settings?->rules_html),
             'hasNotices' => Notice::active()->exists(),
             'hasSeason' => (bool) $season,

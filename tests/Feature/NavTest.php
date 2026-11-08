@@ -49,7 +49,7 @@ class NavTest extends TestCase
         foreach (['Dashboard', 'Players', 'Settings', 'Season'] as $label) {
             $page->assertSee($nav($label), false);
         }
-        $page->assertDontSee('Quick links');
+        $page->assertSee('Quick links')->assertSee('Start a doubles tournament')->assertDontSee('Enter or check results')->assertDontSee('Add an expense');
 
         // A season, but no fixtures or rules
         Season::create(['starts_on' => '2026-11-13', 'status' => 'current']);

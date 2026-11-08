@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Player;
 use App\Models\Season;
 use App\Models\Setting;
+use App\Models\Tournament;
 use App\Services\Finance;
 use App\Services\League;
 use Illuminate\Http\RedirectResponse;
@@ -25,7 +26,7 @@ class PlayerController extends Controller
 
         // Where "back" goes: the finance pages, or a week's subs page, for the admin who came from there
         $from = (string) $request->query('from');
-        $back = ['url' => route('home'), 'label' => 'Back to league table', 'section' => 'league'];
+        $back = ['url' => Tournament::running() ? route('league') : route('home'), 'label' => 'Back to league table', 'section' => 'league'];
         if ($from === 'finance') {
             $back = ['url' => route('finance.index'), 'label' => 'Back to finance', 'section' => 'finance'];
         } elseif ($from === 'owed') {

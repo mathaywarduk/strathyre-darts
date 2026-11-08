@@ -20,7 +20,8 @@
         <a class="brand" href="{{ route('home') }}">Strathyre Darts League</a>
         @php
             $links = array_filter([
-                ['League', route('home'), 'league'],
+                $tournamentRunning ? ['Doubles', route('home'), 'doubles'] : null,
+                ['League', $tournamentRunning ? route('league') : route('home'), 'league'],
                 $leagueLive ? ['Results and fixtures', route('results.index'), 'results'] : null,
                 $leagueLive ? ['Finance', route('finance.index'), 'finance'] : null,
                 $hasNotices ? ['Notices', route('notices'), 'notices'] : null,

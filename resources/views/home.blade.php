@@ -73,8 +73,8 @@
 
     @if ($night)
         <section class="sec">
-            <h2 class="h2">Week {{ $night->week }}</h2>
-            <p class="sub">{{ Dates::long($night->date) }}
+            <h2 class="h2">Upcoming fixtures</h2>
+            <p class="sub">Week {{ $night->week }} · {{ Dates::long($night->date) }}
                 @if ($pending)
                     <span class="tag" style="margin-left: 8px; vertical-align: middle">Results pending</span>
                 @endif
@@ -88,6 +88,7 @@
             @if ($byes->isNotEmpty())
                 <div class="line"><span class="mute">Bye: {{ $byes->pluck('name')->implode(', ') }}</span></div>
             @endif
+            <p style="margin: 16px 0 0"><a class="nm" href="{{ route('results.index') }}">All fixtures ›</a></p>
         </section>
     @endif
 

@@ -4,12 +4,31 @@ namespace App\Http\Controllers;
 
 use App\Models\Season;
 use App\Models\Setting;
+use App\Models\Tournament;
 use App\Services\League;
+use App\Services\Tournament\Bracket;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class HomeController extends Controller
 {
+    /** While a doubles tournament is running the home page is the tournament. */
     public function index(): View
+    {
+        if ($tournament = Tournament::running()) {
+            return view('tournament.public', ['tournament' => $tournament, 'bracket' => new Bracket($tournament)]);
+        }
+
+        return $this->leaguePage();
+    }
+
+    /** The league page, always. It only has its own address while the tournament has taken over the home page. */
+    public function league(): View|RedirectResponse
+    {
+        return Tournament::running() ? $this->leaguePage() : redirect()->route('home');
+    }
+
+    private function leaguePage(): View
     {
         $season = Season::current();
         $settings = Setting::current();

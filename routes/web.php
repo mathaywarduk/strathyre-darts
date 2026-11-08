@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Route;
 | Public site
 */
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('league', [HomeController::class, 'league'])->name('league');
 Route::get('results', [ResultsController::class, 'index'])->name('results.index');
 Route::get('rules', [RulesController::class, 'show'])->name('rules');
 Route::get('notices', [NoticesController::class, 'index'])->name('notices');
@@ -76,6 +77,16 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('rules', [Admin\RulesController::class, 'edit'])->name('rules.edit');
         Route::put('rules', [Admin\RulesController::class, 'update'])->name('rules.update');
         Route::resource('notices', Admin\NoticeController::class)->except(['show']);
+
+        Route::get('doubles', [Admin\DoublesController::class, 'index'])->name('doubles.index');
+        Route::get('doubles/new', [Admin\DoublesController::class, 'create'])->name('doubles.create');
+        Route::post('doubles', [Admin\DoublesController::class, 'store'])->name('doubles.store');
+        Route::post('doubles/redraw', [Admin\DoublesController::class, 'redraw'])->name('doubles.redraw');
+        Route::post('doubles/end', [Admin\DoublesController::class, 'end'])->name('doubles.end');
+        Route::delete('doubles', [Admin\DoublesController::class, 'destroy'])->name('doubles.destroy');
+        Route::get('doubles/matches/{match}', [Admin\DoublesController::class, 'match'])->name('doubles.match');
+        Route::put('doubles/matches/{match}', [Admin\DoublesController::class, 'score'])->name('doubles.score');
+        Route::delete('doubles/matches/{match}', [Admin\DoublesController::class, 'clear'])->name('doubles.clear');
 
         Route::get('subs', [Admin\SubsController::class, 'index'])->name('subs');
         Route::post('subs', [Admin\SubsController::class, 'store'])->name('subs.store');

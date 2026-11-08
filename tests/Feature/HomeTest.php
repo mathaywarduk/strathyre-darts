@@ -135,4 +135,16 @@ class HomeTest extends TestCase
         $this->actingAs($this->admin());
         $this->get(route('admin.settings.edit'))->assertSee('class="wrap wide"', false)->assertDontSee('admin-grid', false);
     }
+
+    public function test_the_upcoming_fixtures_section_names_the_week_and_links_to_all_fixtures(): void
+    {
+        $this->liveLeague();
+        $this->travelTo('2026-11-09 09:00');
+
+        $html = $this->get('/')->assertOk()->assertSee('Upcoming fixtures')->assertSee('Week 1 · Friday 13 November')->getContent();
+        $this->assertStringNotContainsString('<h2 class="h2">Week 1</h2>', $html, 'the heading is no longer the week number');
+        $this->assertMatchesRegularExpression('/<a class="nm" href="'.preg_quote(route('results.index'), '/').'">All fixtures ›<\/a>/', $html);
+        $this->assertLessThan(strpos($html, 'All fixtures'), strpos($html, 'Upcoming fixtures'));
+        $this->assertLessThan(strpos($html, 'Catch-up fixtures'), strpos($html, 'All fixtures'), 'the link sits under the fixtures, before the catch-ups');
+    }
 }

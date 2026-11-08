@@ -4,6 +4,7 @@ Table, fixtures, results and subs for a 20-player darts league. Single-leg 301 m
 
 - **Public site** (`/`): league table, the highest checkout, the current week's fixtures, catch-ups, a Results and fixtures page (one week at a time, with arrows and a dropdown; it opens on the week whose league night is in the current Monday to Sunday, and fixtures not yet played are highlighted in their own week), player pages (with each player's highest checkout and subs), finance (the balance and headline figures, with a page each for subs received, subs owed and expenses), past seasons.
 - **Rules and notices:** a Rules page (one page of formatted text) and a Notices page (a title, a date and formatted text each, newest first; an optional "hide after" date takes a notice down by itself). Each has a tab in the nav once it has something to show. Both are edited in the admin with a small built-in editor offering bold, italic, underline, links, numbered and bulleted lists and a horizontal line. Anything else is stripped when it's saved (HTML Purifier), so nothing unsafe can be stored.
+- **Doubles tournament** (Admin › quick links › Start a doubles tournament): tick who's playing from the league, add anyone else by name, and click start. Everyone is put into teams of two at random (last year's champions are ticked and marked, and kept together if both play) and a standard knockout is drawn, with byes if the number of teams isn't a power of two. While it runs, the home page shows the bracket, with the trophy in the middle on wide screens and round by round on phones; the league moves to `/league`. When logged in, tap a match to add its result (winner, and an optional checkout). Finish it to put the league back on the home page; the champions are remembered for next year.
 - **Admin** (`/admin`, one login: username `admin`): players, fixtures, results, expenses, subs payments, notices, rules, settings, season reset. When logged in, the public pages also show Edit buttons on results.
 
 Built the same way as the Kind booking site: Laravel, Blade, server-rendered forms, one shared login, public pages and admin reading the same database. No emails, queue or scheduler, and no Node build: the CSS and JS are plain files in `public/`.
@@ -32,6 +33,7 @@ Built the same way as the Kind booking site: Laravel, Blade, server-rendered for
 | `app/Services/ResultSubmission.php` | Parses pasted results, previews, saves, "no results" |
 | `app/Services/PlayerImport.php`, `FixtureImport.php` | CSV checks before anything is saved |
 | `app/Services/SeasonManager.php` | Reset (archive + carry balance) and hard delete |
+| `app/Services/Tournament/*` | The doubles draw (random teams and bracket), scoring and the bracket for display |
 | `app/Support/RichText.php` | Cleans formatted text so only the allowed formatting is stored |
 | `public/js/editor.js` | The rich text editor in the admin (enhances a plain textarea) |
 | `app/Http/Controllers/Admin/*` | Admin screens |

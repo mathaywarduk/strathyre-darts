@@ -17,6 +17,8 @@
     --women: #ffb547;
     --men: #6cc4ff;
     --link: #6cc4ff;
+    --hl: rgba(255, 255, 255, .12);
+    --bracket: #7d7d7d;
     --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1.5l6 6 6-6' fill='none' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     --font: 'Barlow', system-ui, sans-serif;
     --font-cond: 'Barlow Condensed', sans-serif;
@@ -35,6 +37,8 @@ body.light {
     --hover: #444;
     --field-bg: #fff;
     --link: #0b5cad;
+    --hl: rgba(0, 0, 0, .07);
+    --bracket: #8f8a7c;
     --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1.5l6 6 6-6' fill='none' stroke='%230a0a0a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 }
 
@@ -315,3 +319,91 @@ a.wn-btn:hover { background: var(--line-strong); color: var(--fg); }
 .line.fx-unplayed { background: rgba(255, 255, 255, .08); border-left: 3px solid var(--fg); padding: 0 0 0 12px; } /* flush right, so Add result lines up with Edit */
 
 #week-panel[aria-busy="true"] .weeknav .wn-title, #week-panel[aria-busy="true"] section { opacity: .6; transition: opacity .15s; }
+
+/* ---------------------------------------------------------------------- */
+/* Doubles tournament                                                      */
+
+.plain-fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.picks { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.picks.one { grid-template-columns: 1fr; }
+.pick { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; min-height: 52px; padding: 8px 12px; border: 1px solid var(--line-strong); border-radius: 4px; cursor: pointer; }
+.pick input { width: 22px; height: 22px; flex: 0 0 auto; }
+.pick .badge { margin-left: auto; }
+.pick:has(input:checked) { border-color: var(--fg); background: var(--hl); }
+
+/* The bracket: a card per match, two teams each. The same cards and lines are used on
+   the two-sided wide view and the one-sided view (phones, and always in the admin). */
+.br-card { position: relative; display: block; width: var(--cw, 150px); flex: 0 0 auto; border: 1px solid var(--btn-border); border-radius: 4px; background: var(--bg); color: inherit; text-decoration: none; font-size: 14px; line-height: 1.25; }
+a.br-card:hover { border-color: var(--fg); color: inherit; }
+.br-card.bye { border-style: dashed; opacity: .75; }
+.br-team { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-height: 44px; padding: 6px 8px; }
+.br-team + .br-team { border-top: 1px solid var(--line-strong); }
+.br-name { min-width: 0; overflow-wrap: anywhere; }
+.br-name.faint { color: var(--mute); font-style: italic; }
+.br-team.win { background: var(--hl); font-weight: 700; box-shadow: inset 3px 0 0 var(--fg); }
+.br-team.lose { color: var(--mute); }
+.br-def { color: #e4aa2c; flex: 0 0 auto; }
+.br-meta { padding: 3px 8px; border-top: 1px solid var(--line-strong); font-size: 12px; color: var(--mute); }
+.br-meta.act, .br-meta .act { color: var(--fg); font-weight: 600; }
+.br-trophy { display: flex; justify-content: center; }
+.trophy { display: block; width: 120px; height: auto; }
+
+/* The tree: each match with the matches that fed it beside it, joined by lines */
+.br-half { display: flex; align-items: center; }
+.br-node { position: relative; display: flex; align-items: center; }
+.br-node.right { flex-direction: row-reverse; }
+.br-kids { display: flex; flex-direction: column; margin-right: var(--gap, 28px); }
+.br-node.right > .br-kids { margin-right: 0; margin-left: var(--gap, 28px); }
+.br-kids > .br-node { padding: 7px 0; }
+.br-kids > .br-node::after { content: ''; position: absolute; right: calc(var(--gap, 28px) / -2); border-right: 1px solid var(--bracket); }
+.br-kids > .br-node:first-child::after { top: 50%; bottom: 0; }
+.br-kids > .br-node:last-child::after { top: 0; bottom: 50%; }
+.br-node.right > .br-kids > .br-node::after { right: auto; left: calc(var(--gap, 28px) / -2); border-right: 0; border-left: 1px solid var(--bracket); }
+.br-kids > .br-node > .br-card::after { content: ''; position: absolute; left: 100%; top: 50%; width: calc(var(--gap, 28px) / 2); border-top: 1px solid var(--bracket); }
+.br-node.right > .br-kids > .br-node > .br-card::after { left: auto; right: 100%; }
+.br-kids + .br-card::before { content: ''; position: absolute; right: 100%; top: 50%; width: calc(var(--gap, 28px) / 2); border-top: 1px solid var(--bracket); }
+.br-node.right > .br-kids + .br-card::before { right: auto; left: 100%; }
+
+.br-winner { width: 100%; text-align: center; }
+.br-winner-box { min-height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px 8px; border: 1px solid #d6a73c; border-radius: 4px; font-weight: 700; font-size: 14px; }
+.br-winner.done .br-winner-box { background: rgba(214, 167, 60, .18); }
+.br-winner-label { margin-top: 8px; font-family: var(--font-cond); font-weight: 700; font-size: 26px; line-height: 1; }
+
+/* One side: all the rounds left to right, with arrows to move between them */
+.bs-nav { display: grid; grid-template-columns: 48px minmax(0, 1fr) 48px; align-items: center; gap: 12px; padding: 4px 0 12px; }
+.bs-title { text-align: center; font-family: var(--font-cond); font-weight: 700; font-size: 26px; line-height: 1; }
+.bs button.wn-btn { border: 0; cursor: pointer; font-family: inherit; }
+.bs button.wn-btn:disabled { opacity: .3; cursor: default; }
+.bs.fits .bs-nav { display: none; }
+.bs-scroll { overflow-x: auto; padding: 4px 2px 24px; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
+.bs-scroll:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+.bs-tree { --cw: 150px; --gap: 28px; display: flex; align-items: center; width: max-content; min-width: 100%; }
+.bs-end { flex: 0 0 auto; width: 132px; margin-left: var(--gap); display: flex; flex-direction: column; align-items: center; gap: 14px; }
+/* Phones: one round fills the screen, and a swipe settles on a round */
+.bs.paged .bs-scroll { scroll-snap-type: x mandatory; scroll-padding-left: 2px; }
+.bs.paged [data-snap] { scroll-snap-align: start; }
+.bs.paged .bs-end { width: var(--cw); }
+.bs-end .trophy { width: 96px; }
+
+/* Wide screens show the two-sided bracket meeting at the trophy; the one-sided view is for phones
+   (and for the admin, always). */
+.br-board { display: none; }
+@media (min-width: 900px) {
+    .br-board { --cw: 168px; --gap: 28px; --below: 300px; display: flex; align-items: center; gap: var(--gap); overflow-x: auto; padding: 8px 0 var(--below); } /* room under the final for the trophy and winner */
+    .br-board.r1, .br-board.r2 { --cw: 196px; --gap: 36px; }
+    .br-board.r3 { --cw: 168px; --gap: 28px; }
+    .br-board.r4, .br-board.r5, .br-board.r6 { --cw: 124px; --gap: 22px; --below: 250px; }
+    .br-board > :first-child { margin-left: auto; }  /* centred when there's room, scrollable when not */
+    .br-board > :last-child { margin-right: auto; }
+    .br-board.r1 .br-card, .br-board.r2 .br-card, .br-board.r3 .br-card { font-size: 15px; }
+    .bs:not(.always) { display: none; }
+
+    .br-half.left > .br-node > .br-card::after { content: ''; position: absolute; left: 100%; top: 50%; width: var(--gap); border-top: 1px solid var(--bracket); }
+    .br-half.right > .br-node > .br-card::after { content: ''; position: absolute; right: 100%; top: 50%; width: var(--gap); border-top: 1px solid var(--bracket); }
+
+    /* The middle: the final level with the semi-finals, with the trophy and the winner hanging below it */
+    .br-centre { position: relative; flex: 0 0 var(--cw); }
+    .br-below { position: absolute; top: calc(100% + 18px); left: 0; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+    .br-board .trophy { width: 120px; }
+    .br-board.r4 .trophy, .br-board.r5 .trophy, .br-board.r6 .trophy { width: 96px; }
+}
