@@ -198,6 +198,19 @@ class RulesAndNoticesTest extends TestCase
         $this->assertTrue(strpos($html, 'Newest') < strpos($html, 'Middle') && strpos($html, 'Middle') < strpos($html, 'Older'));
     }
 
+    public function test_while_notices_are_switched_off_only_a_logged_in_admin_sees_them(): void
+    {
+        config(['league.notices_public' => false]);
+        Notice::create(['title' => 'Secret', 'date' => '2026-11-08', 'content' => '<p>Not yet</p>']);
+
+        $this->get('/')->assertDontSee(route('notices'));
+        $this->get('/notices')->assertRedirect(route('home'));
+
+        $this->actingAs($this->admin());
+        $this->get('/')->assertSee('href="'.route('notices').'"', false);
+        $this->get('/notices')->assertOk()->assertSee('Secret');
+    }
+
     public function test_the_notices_tab_only_shows_when_there_is_a_notice(): void
     {
         $this->get('/')->assertDontSee(route('notices'));

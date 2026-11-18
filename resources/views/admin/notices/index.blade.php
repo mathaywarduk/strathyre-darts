@@ -9,6 +9,9 @@
             <div class="line">
                 <span>
                     <span class="mute">{{ Dates::short($n->date) }} {{ $n->date->year }}</span> &nbsp;<strong>{{ $n->title }}</strong>
+                    @if ($n->images_count)
+                        <span class="mute" style="margin-left: 6px">{{ $n->images_count }} {{ \Illuminate\Support\Str::plural('picture', $n->images_count) }}</span>
+                    @endif
                     @if ($n->isExpired())
                         <span class="tag" style="margin-left: 6px">Expired</span>
                     @elseif ($n->expires_on)
