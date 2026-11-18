@@ -1,7 +1,6 @@
-@use('App\Support\Dates')
 @use('App\Support\Money')
 <x-layouts.site title="Subs received" section="finance">
-    <div style="padding-top: 8px"><a class="back" href="{{ route('finance.index') }}">Back to finance</a></div>
+    @include('partials.finance-nav', ['current' => 'received'])
     <section class="hero" style="padding-top: 16px">
         <h1 class="page-title">Subs received</h1>
         <div class="finance-balance" style="font-size: 64px; margin-top: 12px">{{ Money::format($finance->received()) }}</div>
@@ -9,22 +8,31 @@
     </section>
 
     <section class="sec first">
-        <h2 class="h2">Week by week</h2>
+        <h2 class="h2">What each player has paid</h2>
+        <p class="mute" style="margin: 6px 0 0">Crossed weeks are paid. Dotted weeks haven’t been played yet and are already paid.</p>
         <div class="narrow">
-        @forelse ($weeks as $w)
-            <div class="week-row">
+        @foreach ($players as $p)
+            @php($weeks = collect($finance->player($p->id)['cells'])->where('paid', true))
+            <div class="paid-row">
                 <div class="top">
-                    <span><a class="nm" style="font-weight: 600" href="{{ route('finance.week', $w['night']->week) }}">Week {{ $w['night']->week }}</a> <span class="mute">{{ Dates::short($w['night']->date) }}</span></span>
-                    <span style="font-weight: 600">{{ Money::format($w['received']) }}</span>
+                    <a class="nm" style="font-weight: 600" href="{{ route('players.show', [$p, 'from' => 'received']) }}">{{ $p->name }}</a>
+                    <span style="font-weight: 600" @class(['mute' => $weeks->isEmpty()])>{{ Money::format($finance->paidBy($p->id)) }}</span>
                 </div>
-                <div class="mid mute"><span>{{ $w['paid']->count() }} of {{ $w['paid']->count() + $w['unpaid']->count() }} paid</span><span>of {{ Money::format($w['expected']) }}</span></div>
-                @if ($w['unpaid']->isNotEmpty())
-                    <div class="missed">Missed: {{ $w['unpaid']->map(fn ($p) => $p->name.($w['covered'][$p->id] > 0 ? ' ('.Money::format($w['covered'][$p->id]).' paid)' : ''))->implode(', ') }}</div>
+                @if ($weeks->isEmpty())
+                    <div class="mute">Nothing paid yet</div>
+                @else
+                    <div class="week-strip" tabindex="0" role="group" aria-label="Weeks paid by {{ $p->name }}">
+                        @foreach ($weeks as $cell)
+                            @if ($cell['ahead'])
+                                <span class="week-btn paid ahead" aria-label="Week {{ $cell['night']->week }}, paid in advance"><small>Week</small>{{ $cell['night']->week }}</span>
+                            @else
+                                <a class="week-btn paid" href="{{ route('finance.week', $cell['night']->week) }}" aria-label="Week {{ $cell['night']->week }}, paid"><small>Week</small>{{ $cell['night']->week }}</a>
+                            @endif
+                        @endforeach
+                    </div>
                 @endif
             </div>
-        @empty
-            <p class="sub">No league nights yet.</p>
-        @endforelse
+        @endforeach
         </div>
     </section>
 </x-layouts.site>

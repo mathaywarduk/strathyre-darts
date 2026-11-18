@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\LeagueNight;
 use App\Models\Player;
+use App\Models\SubsPayment;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 
@@ -25,6 +26,9 @@ final class Finance
     /** @var array<int, int> player id => total paid, in pence */
     private array $paid = [];
 
+    /** @var Collection<int, Collection<int, SubsPayment>> player id => their payments, oldest first */
+    private Collection $payments;
+
     private int $received;
 
     private int $expensePence;
@@ -38,6 +42,7 @@ final class Finance
         foreach ($payments as $payment) {
             $this->paid[$payment->player_id] = ($this->paid[$payment->player_id] ?? 0) + $payment->amount_pence;
         }
+        $this->payments = $payments->sortBy(fn ($p) => [$p->paid_on->timestamp, $p->id])->groupBy('player_id');
         $this->received = (int) $payments->sum('amount_pence');
         $this->expensePence = (int) $league->season->expenses()->sum('cost_pence');
     }
@@ -56,6 +61,26 @@ final class Finance
     public function paidBy(int $playerId): int
     {
         return $this->paid[$playerId] ?? 0;
+    }
+
+    /** @return Collection<int, SubsPayment> what the player has handed over, oldest first */
+    public function paymentsBy(int $playerId): Collection
+    {
+        return $this->payments->get($playerId, collect());
+    }
+
+    /** Whole weeks the player's money covers, counting from week 1 and stopping at the end of the season */
+    public function weeksCovered(int $playerId): int
+    {
+        $total = $this->league->nights->count();
+
+        return $this->rate > 0 ? min($total, intdiv($this->paidBy($playerId), $this->rate)) : $total;
+    }
+
+    /** Money paid beyond what the whole season costs */
+    public function beyondSeason(int $playerId): int
+    {
+        return max(0, $this->paidBy($playerId) - $this->league->nights->count() * $this->rate);
     }
 
     /** What every player owes in total so far */
@@ -158,16 +183,27 @@ final class Finance
         ];
     }
 
-    /** @return array{paid: int, due: int, owed: int, credit: int, weeks: list<int>, cells: list<array{night: LeagueNight, paid: bool}>} */
+    /**
+     * A player's subs: a button for every week due so far, plus any later weeks their money already covers.
+     *
+     * @return array{paid: int, due: int, owed: int, credit: int, weeks: list<int>, paidThrough: ?int, extra: int, cells: list<array{night: LeagueNight, paid: bool, ahead: bool}>}
+     */
     public function player(int $playerId): array
     {
+        $covered = $this->weeksCovered($playerId);
+        $dueCount = $this->dueNights()->count();
+        $shown = $this->league->nights->values()->filter(fn ($n, $i) => $this->isDue($n) || $i < $covered);
+
         return [
             'paid' => $this->paidBy($playerId),
             'due' => $this->due(),
             'owed' => $this->owedBy($playerId),
             'credit' => $this->creditOf($playerId),
             'weeks' => $this->weeksOwed($playerId),
-            'cells' => $this->dueNights()->map(fn ($n) => ['night' => $n, 'paid' => $this->isPaid($n, $playerId)])->all(),
+            // The last week their money reaches, only when that is beyond the weeks due so far
+            'paidThrough' => $covered > $dueCount ? $this->league->nights->values()[$covered - 1]->week : null,
+            'extra' => $this->beyondSeason($playerId),
+            'cells' => $shown->map(fn ($n) => ['night' => $n, 'paid' => $this->isPaid($n, $playerId), 'ahead' => ! $this->isDue($n)])->values()->all(),
         ];
     }
 

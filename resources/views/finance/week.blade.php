@@ -1,7 +1,7 @@
 @use('App\Support\Dates')
 @use('App\Support\Money')
 <x-layouts.site :title="'Week '.$night->week.' subs'" section="finance">
-    <div style="padding-top: 8px"><a class="back" href="{{ route('finance.received') }}">Back to subs received</a></div>
+    @include('partials.finance-nav', ['current' => 'received'])
     <section class="hero" style="padding-top: 16px">
         <h1 class="page-title">Week {{ $night->week }} subs</h1>
         <p class="mute" style="margin: 8px 0 0; font-size: 16px">{{ Dates::long($night->date) }}</p>

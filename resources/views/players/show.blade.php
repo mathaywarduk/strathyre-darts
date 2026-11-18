@@ -56,12 +56,25 @@
             <span style="display: inline-block; width: 20px"></span>
             <span class="mute">Owes:</span> <strong @class(['owed-text' => $subs['owed'] > 0])>{{ Money::format($subs['owed']) }}</strong>
         </p>
+        @if ($subs['paidThrough'])
+            <p style="margin: 0 0 6px">Paid up to week {{ $subs['paidThrough'] }}{{ $subs['paidThrough'] === $league->nights->max('week') ? ', the end of the season' : '' }}.</p>
+        @endif
+        @if ($subs['extra'] > 0)
+            <p style="margin: 0 0 6px">{{ Money::format($subs['extra']) }} more than the season costs.</p>
+        @endif
         @include('partials.subs-updated', ['updated' => $subsUpdated])
         <div class="week-grid" style="margin-top: 14px">
             @foreach ($subs['cells'] as $cell)
-                <a class="week-btn {{ $cell['paid'] ? 'paid' : '' }}" href="{{ route('finance.week', $cell['night']->week) }}" aria-label="Week {{ $cell['night']->week }}, {{ $cell['paid'] ? 'paid' : 'not paid in full' }}"><small>Week</small>{{ $cell['night']->week }}</a>
+                @if ($cell['ahead'])
+                    <span class="week-btn paid ahead" aria-label="Week {{ $cell['night']->week }}, paid in advance"><small>Week</small>{{ $cell['night']->week }}</span>
+                @else
+                    <a class="week-btn {{ $cell['paid'] ? 'paid' : '' }}" href="{{ route('finance.week', $cell['night']->week) }}" aria-label="Week {{ $cell['night']->week }}, {{ $cell['paid'] ? 'paid' : 'not paid in full' }}"><small>Week</small>{{ $cell['night']->week }}</a>
+                @endif
             @endforeach
         </div>
+        @if (collect($subs['cells'])->contains('ahead', true))
+            <p class="mute" style="margin: 10px 0 0; font-size: 14px">Dotted weeks have been pre-paid.</p>
+        @endif
     </section>
     </div>
     <div class="pcol-b">

@@ -29,6 +29,8 @@ class PlayerController extends Controller
         $back = ['url' => Tournament::running() ? route('league') : route('home'), 'label' => 'Back to league table', 'section' => 'league'];
         if ($from === 'finance') {
             $back = ['url' => route('finance.index'), 'label' => 'Back to finance', 'section' => 'finance'];
+        } elseif ($from === 'received') {
+            $back = ['url' => route('finance.received'), 'label' => 'Back to subs received', 'section' => 'finance'];
         } elseif ($from === 'owed') {
             $back = ['url' => route('finance.owed'), 'label' => 'Back to subs owed', 'section' => 'finance'];
         } elseif (preg_match('/^week\.(\d+)$/', $from, $m)) {

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\LeagueNight;
 use App\Models\Season;
 use App\Models\Setting;
 use App\Services\Finance;
@@ -25,9 +24,7 @@ class FinanceController extends Controller
 
         return view('finance.received', [
             'finance' => $finance,
-            'weeks' => $finance->dueNights()->reverse()->values()->map(
-                fn (LeagueNight $night) => ['night' => $night] + $finance->week($night)
-            ),
+            'players' => $finance->league->players->values(),
         ]);
     }
 

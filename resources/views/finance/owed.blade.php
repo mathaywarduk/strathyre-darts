@@ -1,7 +1,7 @@
 @use('App\Support\Money')
 @use('App\Services\Finance')
 <x-layouts.site title="Subs owed" section="finance">
-    <div style="padding-top: 8px"><a class="back" href="{{ route('finance.index') }}">Back to finance</a></div>
+    @include('partials.finance-nav', ['current' => 'owed'])
     <section class="hero" style="padding-top: 16px">
         <h1 class="page-title">Subs owed</h1>
         <div class="finance-balance" style="font-size: 64px; margin-top: 12px"><span class="owed-text">{{ Money::format($finance->owed()) }}</span></div>

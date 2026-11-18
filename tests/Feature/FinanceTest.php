@@ -166,8 +166,8 @@ class FinanceTest extends TestCase
 
         $this->get('/finance')->assertOk()->assertSee('Balance')
             ->assertSee(route('finance.received'))->assertSee(route('finance.owed'))->assertSee(route('finance.expenses'));
-        $this->get('/finance/subs-received')->assertOk()->assertSee('Week by week')
-            ->assertSee('Alice A (£1.00 paid)', false)->assertSee('£1.00');
+        $this->get('/finance/subs-received')->assertOk()->assertSee('What each player has paid')
+            ->assertSee('Alice A')->assertSee('£3.00')->assertDontSee('Week by week');
         $this->get('/finance/subs-owed')->assertOk()->assertSee('Bob B')->assertDontSee('Record a payment');
         $this->get('/finance/expenses')->assertOk()->assertSee('No expenses yet');
         $this->get('/finance/weeks/1')->assertOk()->assertSee('Not paid (19)')->assertDontSee('Record a payment');
@@ -182,9 +182,15 @@ class FinanceTest extends TestCase
         $this->pay($this->player(), '3');
         auth()->logout();
 
-        $this->get('/finance')->assertOk()
+        $html = $this->get('/finance')->assertOk()
             ->assertSee('Subs received')->assertSee('Subs owed')->assertSee('Expenses')
-            ->assertDontSee('Week by week')->assertDontSee('Bob B');
+            ->assertDontSee('Week by week')->assertDontSee('Bob B')->getContent();
+
+        // The figures aren't links any more: each of these pages is linked once, from the menu
+        foreach (['finance.received', 'finance.owed', 'finance.expenses'] as $name) {
+            $this->assertSame(1, substr_count($html, 'href="'.route($name).'"'), $name);
+        }
+        $this->assertStringContainsString('class="stat-label">Subs received</div>', $html);
     }
 
     public function test_admins_get_links_to_record_payments_from_the_detail_pages(): void
@@ -216,6 +222,115 @@ class FinanceTest extends TestCase
         $this->get(route('players.show', [$alice, 'from' => 'owed']))->assertSee('Back to subs owed')->assertSee(route('finance.owed'));
         $this->get(route('players.show', [$alice, 'from' => 'week.2']))->assertSee('Back to week 2 subs');
         $this->get(route('players.show', $alice))->assertSee('Back to league table');
+    }
+
+    public function test_subs_received_shows_each_player_with_their_total_and_the_weeks_that_are_paid(): void
+    {
+        $this->travelTo('2026-11-21 09:00'); // weeks 1 and 2 have been played
+        $alice = $this->player();
+        $this->pay($alice, '5', '2026-11-07');
+        $this->pay($alice, '1.50', '2026-11-12'); // £6.50: three whole weeks, the third one ahead
+        auth()->logout();
+
+        $html = $this->get('/finance/subs-received')->assertOk()->getContent();
+
+        $this->assertStringContainsString('£6.50', $html);
+        $this->assertSame(20, substr_count($html, 'class="paid-row"'));
+        $this->assertSame(19, substr_count($html, 'Nothing paid yet'));
+        $this->assertSame(1, substr_count($html, 'class="week-strip"'));
+        $this->assertStringContainsString('aria-label="Week 1, paid"', $html);
+        $this->assertStringContainsString('aria-label="Week 2, paid"', $html);
+        $this->assertStringContainsString('aria-label="Week 3, paid in advance"', $html);
+        $this->assertStringNotContainsString('aria-label="Week 4', $html);
+        $this->assertStringContainsString('href="'.route('finance.week', 1).'"', $html);
+        $this->assertStringNotContainsString('href="'.route('finance.week', 3).'"', $html); // not played yet
+        $this->assertStringContainsString(route('players.show', [$alice, 'from' => 'received']), html_entity_decode($html));
+        $this->assertStringNotContainsString('Owes', $html);
+        $this->assertStringNotContainsString(' on 7 Nov', $html);
+    }
+
+    public function test_every_finance_page_has_the_finance_menu_with_the_current_page_marked(): void
+    {
+        $this->travelTo('2026-11-21 09:00');
+        auth()->logout();
+
+        foreach ([
+            '/finance' => 'Overview', '/finance/subs-received' => 'Subs received',
+            '/finance/expenses' => 'Expenses', '/finance/subs-owed' => 'Subs owed', '/finance/weeks/1' => 'Subs received',
+        ] as $url => $current) {
+            $html = $this->get($url)->assertOk()->assertSee('aria-label="Finance"', false)->getContent();
+            preg_match('/<nav class="subnav".*?<\/nav>/s', $html, $menu);
+            preg_match_all('/>([^<]+)<\/a>/', $menu[0], $labels);
+            $this->assertSame(['Overview', 'Subs received', 'Subs owed', 'Expenses'], $labels[1], 'menu order and wording');
+            $this->assertStringContainsString('aria-current="page" >'.$current.'</a>', $html, "{$url} should mark {$current}");
+        }
+    }
+
+    public function test_a_player_who_has_paid_ahead_sees_the_later_weeks_marked_paid(): void
+    {
+        $this->travelTo('2026-11-21 09:00'); // weeks 1 and 2 are due
+        $alice = $this->player();
+        $this->pay($alice, '10'); // £2 a night: five weeks
+
+        $subs = $this->finance()->player($alice->id);
+        $this->assertSame(5, $subs['paidThrough']);
+        $this->assertSame([1, 2, 3, 4, 5], array_map(fn ($c) => $c['night']->week, $subs['cells']));
+        $this->assertSame([false, false, true, true, true], array_map(fn ($c) => $c['ahead'], $subs['cells']));
+        $this->assertSame(0, $subs['owed']);
+
+        auth()->logout();
+        $this->get(route('players.show', $alice))->assertOk()
+            ->assertSee('Paid up to week 5')
+            ->assertSee('Week 4, paid in advance')
+            ->assertSee('Week 1, paid')
+            ->assertSee('Dotted weeks')
+            ->assertDontSee('Week 6, paid')
+            ->assertDontSee(route('finance.week', 4)); // not played yet, so there's no page to go to
+    }
+
+    public function test_only_whole_weeks_count_as_paid_ahead(): void
+    {
+        $this->travelTo('2026-11-21 09:00');
+        $alice = $this->player();
+        $this->pay($alice, '7'); // three weeks and half of a fourth
+
+        $this->assertSame(3, $this->finance()->player($alice->id)['paidThrough']);
+        $this->assertCount(3, $this->finance()->player($alice->id)['cells']);
+    }
+
+    public function test_paying_exactly_what_is_due_shows_no_paid_ahead_message(): void
+    {
+        $this->travelTo('2026-11-21 09:00');
+        $alice = $this->player();
+        $this->pay($alice, '4');
+        auth()->logout();
+
+        $this->assertNull($this->finance()->player($alice->id)['paidThrough']);
+        $this->get(route('players.show', $alice))->assertOk()->assertDontSee('Paid up to')->assertDontSee('Dotted weeks')->assertDontSee('paid in advance');
+    }
+
+    public function test_someone_who_has_paid_more_than_the_season_costs_is_told(): void
+    {
+        $this->travelTo('2026-11-21 09:00');
+        $alice = $this->player();
+        $weeks = $this->season->nights()->count();
+        $this->pay($alice, (string) ($weeks * 2 + 10));
+
+        $this->assertSame($weeks, $this->finance()->weeksCovered($alice->id));
+        $this->assertSame(1000, $this->finance()->beyondSeason($alice->id));
+
+        auth()->logout();
+        $this->get(route('players.show', $alice))->assertOk()
+            ->assertSee("Paid up to week {$weeks}, the end of the season")
+            ->assertSee('£10.00 more than the season costs')
+            ->assertSee("Week {$weeks}, paid in advance");
+    }
+
+    public function test_the_received_back_link_goes_to_subs_received(): void
+    {
+        $this->travelTo('2026-11-21 09:00');
+
+        $this->get(route('players.show', [$this->player(), 'from' => 'received']))->assertSee('Back to subs received')->assertSee(route('finance.received'));
     }
 
     public function test_pages_showing_what_has_been_paid_say_when_subs_were_last_updated(): void
