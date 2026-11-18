@@ -135,8 +135,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 .week-btn small { font-size: 12px; font-weight: 500; }
 .week-btn.paid { border: 1px solid var(--line-strong); color: #8a8a8a; text-decoration: line-through; text-decoration-thickness: 2px; }
 body.light .week-btn.paid { color: #7a766c; }
-.week-btn.ahead { border: 2px dotted #8a8a8a; text-decoration: none; }
-body.light .week-btn.ahead { border-color: #7a766c; }
+.week-btn.ahead { border: 2px dotted #e6e6e6; color: #f2f2f2; text-decoration: none; }
+body.light .week-btn.ahead { border-color: #2b2a26; color: #1d1c19; }
 
 /* Finance */
 .finance-balance { font-family: var(--font-cond); font-weight: 700; font-size: 88px; line-height: .9; }
@@ -454,3 +454,11 @@ dialog.lightbox figcaption { min-height: 1.4em; padding: 0 56px; text-align: cen
 .paid-row .top { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
 .week-strip { display: flex; gap: 8px; margin-top: 10px; padding-bottom: 6px; overflow-x: auto; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
 .week-strip .week-btn { flex: 0 0 52px; scroll-snap-align: start; }
+.week-btn.unpaid { border-color: var(--owed); color: var(--owed); }
+.week-key { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 12px 0 16px; color: var(--mute); font-size: 14px; }
+.week-key span { display: inline-flex; align-items: center; gap: 7px; }
+.week-key .sw { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 3px; font-size: 12px; font-weight: 700; font-style: normal; border: 1px solid var(--line-strong); color: #8a8a8a; }
+.week-key .sw.paid { text-decoration: line-through; }
+.week-key .sw.unpaid { border: 2px solid var(--owed); color: var(--owed); }
+.week-key .sw.ahead { border: 2px dotted #e6e6e6; color: #f2f2f2; }
+body.light .week-key .sw.ahead { border-color: #2b2a26; color: #1d1c19; }

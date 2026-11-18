@@ -8,25 +8,24 @@
     </section>
 
     <section class="sec first">
-        <h2 class="h2">What each player has paid</h2>
-        <p class="mute" style="margin: 6px 0 0">Crossed weeks are paid. Dotted weeks haven’t been played yet and are already paid.</p>
+        @include('partials.week-key')
         <div class="narrow">
         @foreach ($players as $p)
-            @php($weeks = collect($finance->player($p->id)['cells'])->where('paid', true))
+            @php($weeks = collect($finance->player($p->id)['cells']))
             <div class="paid-row">
                 <div class="top">
                     <a class="nm" style="font-weight: 600" href="{{ route('players.show', [$p, 'from' => 'received']) }}">{{ $p->name }}</a>
-                    <span style="font-weight: 600" @class(['mute' => $weeks->isEmpty()])>{{ Money::format($finance->paidBy($p->id)) }}</span>
+                    <span style="font-weight: 600" @class(['mute' => $finance->paidBy($p->id) === 0])>{{ Money::format($finance->paidBy($p->id)) }}</span>
                 </div>
                 @if ($weeks->isEmpty())
-                    <div class="mute">Nothing paid yet</div>
+                    <div class="mute">No weeks played yet</div>
                 @else
-                    <div class="week-strip" tabindex="0" role="group" aria-label="Weeks paid by {{ $p->name }}">
+                    <div class="week-strip" tabindex="0" role="group" aria-label="Weeks for {{ $p->name }}">
                         @foreach ($weeks as $cell)
                             @if ($cell['ahead'])
                                 <span class="week-btn paid ahead" aria-label="Week {{ $cell['night']->week }}, paid in advance"><small>Week</small>{{ $cell['night']->week }}</span>
                             @else
-                                <a class="week-btn paid" href="{{ route('finance.week', $cell['night']->week) }}" aria-label="Week {{ $cell['night']->week }}, paid"><small>Week</small>{{ $cell['night']->week }}</a>
+                                <a class="week-btn {{ $cell['paid'] ? 'paid' : 'unpaid' }}" href="{{ route('finance.week', $cell['night']->week) }}" aria-label="Week {{ $cell['night']->week }}, {{ $cell['paid'] ? 'paid' : 'not paid in full' }}"><small>Week</small>{{ $cell['night']->week }}</a>
                             @endif
                         @endforeach
                     </div>

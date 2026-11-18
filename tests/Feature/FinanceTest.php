@@ -166,7 +166,7 @@ class FinanceTest extends TestCase
 
         $this->get('/finance')->assertOk()->assertSee('Balance')
             ->assertSee(route('finance.received'))->assertSee(route('finance.owed'))->assertSee(route('finance.expenses'));
-        $this->get('/finance/subs-received')->assertOk()->assertSee('What each player has paid')
+        $this->get('/finance/subs-received')->assertOk()->assertDontSee('What each player has paid')
             ->assertSee('Alice A')->assertSee('£3.00')->assertDontSee('Week by week');
         $this->get('/finance/subs-owed')->assertOk()->assertSee('Bob B')->assertDontSee('Record a payment');
         $this->get('/finance/expenses')->assertOk()->assertSee('No expenses yet');
@@ -236,8 +236,13 @@ class FinanceTest extends TestCase
 
         $this->assertStringContainsString('£6.50', $html);
         $this->assertSame(20, substr_count($html, 'class="paid-row"'));
-        $this->assertSame(19, substr_count($html, 'Nothing paid yet'));
-        $this->assertSame(1, substr_count($html, 'class="week-strip"'));
+        $this->assertSame(20, substr_count($html, 'class="week-strip"')); // everyone gets the weeks that have been played
+        $this->assertSame(0, substr_count($html, 'No weeks played yet'));
+        $this->assertSame(19 * 2, substr_count($html, 'class="week-btn unpaid"'));
+        $this->assertStringContainsString('class="week-key"', $html);
+        $this->assertStringNotContainsString('Crossed weeks', $html);
+        $this->assertSame(19 * 2, substr_count($html, 'not paid in full')); // the other 19 players, weeks 1 and 2
+        $this->assertSame(0, substr_count($html, 'Week 3, not paid')); // a week that hasn't been played is never unpaid
         $this->assertStringContainsString('aria-label="Week 1, paid"', $html);
         $this->assertStringContainsString('aria-label="Week 2, paid"', $html);
         $this->assertStringContainsString('aria-label="Week 3, paid in advance"', $html);
@@ -247,6 +252,16 @@ class FinanceTest extends TestCase
         $this->assertStringContainsString(route('players.show', [$alice, 'from' => 'received']), html_entity_decode($html));
         $this->assertStringNotContainsString('Owes', $html);
         $this->assertStringNotContainsString(' on 7 Nov', $html);
+    }
+
+    public function test_before_any_week_has_been_played_subs_received_says_so(): void
+    {
+        $this->travelTo('2026-11-10 09:00');
+        auth()->logout();
+
+        $html = $this->get('/finance/subs-received')->assertOk()->getContent();
+        $this->assertSame(20, substr_count($html, 'No weeks played yet'));
+        $this->assertStringNotContainsString('week-strip"', $html);
     }
 
     public function test_every_finance_page_has_the_finance_menu_with_the_current_page_marked(): void
@@ -283,9 +298,27 @@ class FinanceTest extends TestCase
             ->assertSee('Paid up to week 5')
             ->assertSee('Week 4, paid in advance')
             ->assertSee('Week 1, paid')
-            ->assertSee('Dotted weeks')
+            ->assertSee('class="week-key"', false)
+            ->assertDontSee('week-btn unpaid', false)
             ->assertDontSee('Week 6, paid')
             ->assertDontSee(route('finance.week', 4)); // not played yet, so there's no page to go to
+    }
+
+    public function test_a_player_page_marks_unpaid_weeks_and_shows_the_key(): void
+    {
+        $this->travelTo('2026-11-21 09:00'); // weeks 1 and 2 played
+        $bob = $this->player('Bob B');
+        $this->pay($bob, '2'); // week 1 only
+        auth()->logout();
+
+        $html = $this->get(route('players.show', $bob))->assertOk()->getContent();
+
+        $this->assertSame(1, substr_count($html, 'class="week-btn paid"'));
+        $this->assertSame(1, substr_count($html, 'class="week-btn unpaid"'));
+        $this->assertStringContainsString('aria-label="Week 2, not paid in full"', $html);
+        foreach (['Paid</span>', 'Unpaid</span>', 'Paid in advance</span>'] as $label) {
+            $this->assertStringContainsString($label, $html);
+        }
     }
 
     public function test_only_whole_weeks_count_as_paid_ahead(): void
@@ -306,7 +339,7 @@ class FinanceTest extends TestCase
         auth()->logout();
 
         $this->assertNull($this->finance()->player($alice->id)['paidThrough']);
-        $this->get(route('players.show', $alice))->assertOk()->assertDontSee('Paid up to')->assertDontSee('Dotted weeks')->assertDontSee('paid in advance');
+        $this->get(route('players.show', $alice))->assertOk()->assertDontSee('Paid up to')->assertDontSee('paid in advance')->assertDontSee('week-btn paid ahead', false)->assertSee('class="week-key"', false);
     }
 
     public function test_someone_who_has_paid_more_than_the_season_costs_is_told(): void
