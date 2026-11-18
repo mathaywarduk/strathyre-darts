@@ -36,7 +36,7 @@ class NoticeController extends Controller
             $this->images->attach($notice, $picture);
         }
 
-        return redirect()->route('admin.notices.index')->with('status', 'Notice added.');
+        return redirect()->route('admin.notices.index')->with('status', 'Update added.');
     }
 
     public function edit(Notice $notice): View
@@ -74,7 +74,7 @@ class NoticeController extends Controller
     {
         $notice->delete();
 
-        return redirect()->route('admin.notices.index')->with('status', 'Notice deleted.');
+        return redirect()->route('admin.notices.index')->with('status', 'Update deleted.');
     }
 
     private function validated(Request $request): array
@@ -95,9 +95,9 @@ class NoticeController extends Controller
             'remove' => ['nullable', 'array'],
             'remove.*' => ['integer'],
         ], [
-            'content.required' => 'Add some text to the notice.',
-            'expires_on.after_or_equal' => 'The expiry date can’t be before the notice’s own date.',
-            'images.max' => "A notice can have up to {$max} pictures.",
+            'content.required' => 'Add some text to the update.',
+            'expires_on.after_or_equal' => 'The expiry date can’t be before the update’s own date.',
+            'images.max' => "An update can have up to {$max} pictures.",
             'images.*.uploaded' => "A picture was too big for the server to accept (its limit is {$limit}). Try a smaller one.",
             'images.*.mimetypes' => 'Pictures need to be JPG, PNG, WebP or GIF.',
             'images.*.max' => 'A picture is bigger than '.round($kb / 1024).' MB. Try a smaller one.',
@@ -109,7 +109,7 @@ class NoticeController extends Controller
         $data['expires_on'] = $data['expires_on'] ?? null;
         $data['content'] = RichText::clean($data['content']);
         if ($data['content'] === null) {
-            back()->withInput()->withErrors(['content' => 'Add some text to the notice.'])->throwResponse();
+            back()->withInput()->withErrors(['content' => 'Add some text to the update.'])->throwResponse();
         }
 
         return collect($data)->only(['title', 'date', 'expires_on', 'content'])->all();
@@ -126,7 +126,7 @@ class NoticeController extends Controller
         $max = (int) config('league.images_per_notice');
 
         if ($already + count($files) > $max) {
-            back()->withInput()->withErrors(['images' => "A notice can have up to {$max} pictures. It has {$already} already."])->throwResponse();
+            back()->withInput()->withErrors(['images' => "An update can have up to {$max} pictures. It has {$already} already."])->throwResponse();
         }
 
         try {

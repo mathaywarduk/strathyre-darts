@@ -1,7 +1,7 @@
 @use('App\Support\Dates')
-<x-layouts.site title="Notices" section="notices">
+<x-layouts.site title="Updates" section="notices">
     <section class="hero" style="padding-top: 16px">
-        <h1 class="page-title">Notices</h1>
+        <h1 class="page-title">Updates</h1>
     </section>
     <div class="narrow">
         @foreach ($notices as $n)

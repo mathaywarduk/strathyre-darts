@@ -11,10 +11,6 @@ return [
 
     'password_min' => 8,
 
-    // Whether the public Notices page and its nav tab show to everyone. While this is off,
-    // only a logged-in admin sees them (so a new feature can be tried on the live site).
-    'notices_public' => env('NOTICES_PUBLIC', false),
-
     // Pictures on notices. They're stored on this disk: 'public' is the server's own disk
     // (storage/app/public). To use DigitalOcean Spaces later, define an S3 disk in
     // config/filesystems.php and set IMAGE_DISK to its name.

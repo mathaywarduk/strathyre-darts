@@ -37,7 +37,7 @@
                 ['Fixtures', 'admin.fixtures.*', 'admin.fixtures.index', $hasSeason],
                 ['Expenses', 'admin.expenses.*', 'admin.expenses.index', $hasSeason],
                 ['Subs', 'admin.subs*', 'admin.subs', $leagueLive],
-                ['Notices', 'admin.notices.*', 'admin.notices.index', true],
+                ['Updates', 'admin.notices.*', 'admin.notices.index', true],
                 ['Rules', 'admin.rules.*', 'admin.rules.edit', true],
                 ['Settings', 'admin.settings.*', 'admin.settings.edit', true],
                 ['Season', 'admin.season.*', 'admin.season.index', true],

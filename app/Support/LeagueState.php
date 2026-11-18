@@ -23,18 +23,12 @@ final class LeagueState
         return [
             'tournamentRunning' => Tournament::query()->where('status', 'running')->exists(),
             'hasRules' => RichText::hasContent($settings?->rules_html),
-            'hasNotices' => self::noticesVisible() && Notice::active()->exists(),
+            'hasNotices' => Notice::active()->exists(),
             'hasSeason' => (bool) $season,
             'leagueLive' => $season
                 && $settings?->isComplete()
                 && $season->fixtures()->exists(),
         ];
-    }
-
-    /** Everyone sees Notices once the switch in config/league.php is on; until then only a logged-in admin does. */
-    public static function noticesVisible(): bool
-    {
-        return (bool) config('league.notices_public') || auth()->check();
     }
 
     /**

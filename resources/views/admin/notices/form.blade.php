@@ -1,7 +1,7 @@
 @php($editing = $notice->exists)
-<x-layouts.admin :title="$editing ? 'Edit notice' : 'Add a notice'">
-    <p><a class="back" href="{{ route('admin.notices.index') }}">Back to notices</a></p>
-    <h1 class="h2">{{ $editing ? 'Edit notice' : 'Add a notice' }}</h1>
+<x-layouts.admin :title="$editing ? 'Edit update' : 'Add an update'">
+    <p><a class="back" href="{{ route('admin.notices.index') }}">Back to updates</a></p>
+    <h1 class="h2">{{ $editing ? 'Edit update' : 'Add an update' }}</h1>
 
     <form method="POST" action="{{ $editing ? route('admin.notices.update', $notice) : route('admin.notices.store') }}" class="card stack" data-save-shortcut enctype="multipart/form-data">
         @csrf
@@ -19,9 +19,9 @@
         <div>
             <label class="label" for="expires_on">Hide after (optional)</label>
             <input class="field" id="expires_on" name="expires_on" type="date" value="{{ old('expires_on', $notice->expires_on?->toDateString()) }}" style="max-width: 260px">
-            <p class="hint">The last day the notice is shown on the public page. Leave empty to keep it up.</p>
+            <p class="hint">The last day the update is shown on the public page. Leave empty to keep it up.</p>
         </div>
-        <x-rich-editor name="content" label="Notice" :value="old('content', $notice->content)" />
+        <x-rich-editor name="content" label="Update" :value="old('content', $notice->content)" />
 
         <fieldset class="plain-fieldset pictures-field">
             <legend class="label">Pictures (optional)</legend>
@@ -31,7 +31,7 @@
                 <div class="photo-row">
                     <img src="{{ $image->thumbUrl() }}" alt="" width="96" height="72" loading="lazy">
                     <div class="photo-fields">
-                        <label class="label" for="caption-{{ $image->id }}">Caption (also read out to people who can’t see it)</label>
+                        <label class="label" for="caption-{{ $image->id }}">Caption</label>
                         <input class="field" id="caption-{{ $image->id }}" name="captions[{{ $image->id }}]" value="{{ old('captions.'.$image->id, $image->caption) }}" maxlength="200">
                         <label class="check"><input type="checkbox" name="remove[]" value="{{ $image->id }}" @checked(in_array($image->id, array_map('intval', (array) old('remove', [])), true))> Remove this picture</label>
                     </div>
@@ -44,13 +44,13 @@
                 <p class="hint">Choose as many as you like at once. You can add captions after saving.</p>
             </div>
         </fieldset>
-        <button class="btn" type="submit">{{ $editing ? 'Save' : 'Add notice' }}</button>
+        <button class="btn" type="submit">{{ $editing ? 'Save' : 'Add update' }}</button>
     </form>
 
     @if ($editing)
-        <form method="POST" action="{{ route('admin.notices.destroy', $notice) }}" class="card" style="margin-top: 16px" onsubmit="return confirm('Delete this notice?')">
+        <form method="POST" action="{{ route('admin.notices.destroy', $notice) }}" class="card" style="margin-top: 16px" onsubmit="return confirm('Delete this update?')">
             @csrf @method('DELETE')
-            <button class="btn danger" type="submit">Delete notice</button>
+            <button class="btn danger" type="submit">Delete update</button>
         </form>
     @endif
 </x-layouts.admin>

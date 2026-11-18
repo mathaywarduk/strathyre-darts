@@ -84,7 +84,7 @@ class RulesAndNoticesTest extends TestCase
     public function test_the_admin_menu_links_to_both(): void
     {
         $this->actingAs($this->admin());
-        $this->get(route('admin.dashboard'))->assertSee('>Notices</a>', false)->assertSee('>Rules</a>', false);
+        $this->get(route('admin.dashboard'))->assertSee('>Updates</a>', false)->assertSee('>Rules</a>', false);
     }
 
     /* ---- rules ---- */
@@ -198,19 +198,6 @@ class RulesAndNoticesTest extends TestCase
         $this->assertTrue(strpos($html, 'Newest') < strpos($html, 'Middle') && strpos($html, 'Middle') < strpos($html, 'Older'));
     }
 
-    public function test_while_notices_are_switched_off_only_a_logged_in_admin_sees_them(): void
-    {
-        config(['league.notices_public' => false]);
-        Notice::create(['title' => 'Secret', 'date' => '2026-11-08', 'content' => '<p>Not yet</p>']);
-
-        $this->get('/')->assertDontSee(route('notices'));
-        $this->get('/notices')->assertRedirect(route('home'));
-
-        $this->actingAs($this->admin());
-        $this->get('/')->assertSee('href="'.route('notices').'"', false);
-        $this->get('/notices')->assertOk()->assertSee('Secret');
-    }
-
     public function test_the_notices_tab_only_shows_when_there_is_a_notice(): void
     {
         $this->get('/')->assertDontSee(route('notices'));
@@ -221,7 +208,7 @@ class RulesAndNoticesTest extends TestCase
         auth()->logout();
 
         $this->get('/')->assertSee('href="'.route('notices').'"', false);
-        $this->get('/notices')->assertSee('aria-current="page" >Notices</a>', false);
+        $this->get('/notices')->assertSee('aria-current="page" >Updates</a>', false);
 
         $this->actingAs($this->admin());
         $this->delete(route('admin.notices.destroy', Notice::first()))->assertRedirect(route('admin.notices.index'));
@@ -234,7 +221,7 @@ class RulesAndNoticesTest extends TestCase
         $this->actingAs($this->admin());
         $n = Notice::create(['title' => 'Old title', 'date' => '2026-11-01', 'content' => '<p>old</p>']);
 
-        $this->get(route('admin.notices.edit', $n))->assertOk()->assertSee('Old title')->assertSee('value="2026-11-01"', false)->assertSee('Delete notice');
+        $this->get(route('admin.notices.edit', $n))->assertOk()->assertSee('Old title')->assertSee('value="2026-11-01"', false)->assertSee('Delete update');
         $this->put(route('admin.notices.update', $n), ['title' => 'New title', 'date' => '2026-11-09', 'content' => '<p><u>new</u></p>'])->assertRedirect(route('admin.notices.index'));
 
         $n->refresh();
