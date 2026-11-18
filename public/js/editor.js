@@ -1,4 +1,4 @@
-/* A small rich text editor for the admin: bold, italic, underline, links, lists and a
+/* A small rich text editor for the admin: headings, bold, italic, underline, links, lists and a
    line. It enhances a plain textarea, so without JavaScript you can still edit the HTML.
    Whatever is saved is cleaned again on the server. */
 
@@ -48,9 +48,28 @@
             }
         };
 
+        // The paragraph, heading or list item the cursor is in
+        const blockAt = (node) => {
+            while (node && node !== area) {
+                if (node.nodeType === 1 && /^(P|H2|H3|LI|DIV)$/.test(node.tagName)) return node;
+                node = node.parentNode;
+            }
+            return null;
+        };
+
+        // Make the current line a heading; do it again on a heading to turn it back into a paragraph
+        const heading = (tag) => {
+            const sel = window.getSelection();
+            const block = sel && sel.anchorNode ? blockAt(sel.anchorNode) : null;
+            if (block && block.tagName === 'LI') return; // list items stay list items
+            const same = block && block.tagName.toLowerCase() === tag;
+            document.execCommand('formatBlock', false, '<' + (same ? 'p' : tag) + '>');
+        };
+
         const run = (cmd) => {
             area.focus();
             if (cmd === 'link') link();
+            else if (cmd === 'h2' || cmd === 'h3') heading(cmd);
             else document.execCommand(cmd, false, null);
             sync();
             refresh();
@@ -63,6 +82,10 @@
                     let on = false;
                     try { on = document.queryCommandState(cmd); } catch (e) { /* not supported */ }
                     b.setAttribute('aria-pressed', on && document.activeElement === area ? 'true' : 'false');
+                } else if (cmd === 'h2' || cmd === 'h3') {
+                    const sel = window.getSelection();
+                    const block = document.activeElement === area && sel && sel.anchorNode ? blockAt(sel.anchorNode) : null;
+                    b.setAttribute('aria-pressed', block && block.tagName.toLowerCase() === cmd ? 'true' : 'false');
                 }
             });
         };

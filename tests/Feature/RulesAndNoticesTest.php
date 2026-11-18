@@ -25,6 +25,27 @@ class RulesAndNoticesTest extends TestCase
         }
     }
 
+    public function test_two_heading_levels_are_kept(): void
+    {
+        $clean = RichText::clean('<h2>Match rules</h2><p>Text</p><h3 class="x" onclick="y()">Timing</h3><p>More</p>');
+
+        $this->assertSame('<h2>Match rules</h2><p>Text</p><h3>Timing</h3><p>More</p>', str_replace("\n", '', $clean));
+    }
+
+    public function test_other_heading_sizes_become_one_of_the_two(): void
+    {
+        $clean = str_replace("\n", '', RichText::clean('<h1>One</h1><h2>Two</h2><h3>Three</h3><h4>Four</h4><h5>Five</h5><h6>Six</h6>'));
+
+        $this->assertSame('<h2>One</h2><h2>Two</h2><h3>Three</h3><h3>Four</h3><h3>Five</h3><h3>Six</h3>', $clean);
+    }
+
+    public function test_empty_headings_are_dropped_and_a_heading_alone_is_content(): void
+    {
+        $this->assertNull(RichText::clean('<h2></h2><h3><br></h3>'));
+        $this->assertSame('<h2>Hi</h2>', RichText::clean('<h2>Hi</h2><h3> </h3>'));
+        $this->assertTrue(RichText::hasContent('<h2>Hi</h2>'));
+    }
+
     public function test_everything_else_is_removed(): void
     {
         $clean = RichText::clean('<p onclick="x()" style="color:red">Hi</p><script>alert(1)</script><img src="x" onerror="alert(1)"><iframe src="y"></iframe><span class="z">span</span><h1>Big</h1><table><tr><td>cell</td></tr></table>');
@@ -94,10 +115,10 @@ class RulesAndNoticesTest extends TestCase
         $this->actingAs($this->admin());
         $html = $this->get(route('admin.rules.edit'))->assertOk()->getContent();
 
-        foreach (['bold', 'italic', 'underline', 'link', 'insertUnorderedList', 'insertOrderedList', 'insertHorizontalRule'] as $cmd) {
+        foreach (['h2', 'h3', 'bold', 'italic', 'underline', 'link', 'insertUnorderedList', 'insertOrderedList', 'insertHorizontalRule'] as $cmd) {
             $this->assertStringContainsString('data-cmd="'.$cmd.'"', $html);
         }
-        $this->assertSame(7, substr_count($html, 'data-cmd='), 'no images, headings or anything else');
+        $this->assertSame(9, substr_count($html, 'data-cmd='), 'two heading levels, and no images or anything else');
         $this->assertStringContainsString('js/editor.js', $html);
     }
 
@@ -146,6 +167,19 @@ class RulesAndNoticesTest extends TestCase
 
         $this->get('/')->assertSee('Coming soon')->assertSee(route('rules'));
         $this->get('/rules')->assertOk()->assertSee('Rules before the season.');
+    }
+
+    public function test_headings_show_on_the_rules_page_and_the_editor_offers_them(): void
+    {
+        $this->actingAs($this->admin());
+        $this->put(route('admin.rules.update'), ['content' => '<h2>Match rules</h2><p>Be nice</p><h3>Timing</h3><p>15 minutes</p>'])->assertRedirect();
+        auth()->logout();
+
+        $this->get('/rules')->assertOk()->assertSee('<h2>Match rules</h2>', false)->assertSee('<h3>Timing</h3>', false);
+
+        $this->actingAs($this->admin());
+        $this->get(route('admin.rules.edit'))->assertOk()
+            ->assertSee('data-cmd="h2"', false)->assertSee('data-cmd="h3"', false);
     }
 
     /* ---- notices ---- */

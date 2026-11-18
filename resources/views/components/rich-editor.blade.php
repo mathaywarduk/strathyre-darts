@@ -7,6 +7,8 @@
 <div class="rte" data-rte>
     <label class="label" for="{{ $id }}">{{ $label }}</label>
     <div class="rte-toolbar" role="toolbar" aria-label="Formatting" hidden>
+        <button type="button" data-cmd="h2" aria-label="Heading" title="Heading">Heading</button>
+        <button type="button" data-cmd="h3" aria-label="Subheading" title="Subheading">Subheading</button>
         <button type="button" data-cmd="bold" aria-label="Bold" title="Bold (Ctrl+B)"><b>B</b></button>
         <button type="button" data-cmd="italic" aria-label="Italic" title="Italic (Ctrl+I)"><i>I</i></button>
         <button type="button" data-cmd="underline" aria-label="Underline" title="Underline (Ctrl+U)"><u>U</u></button>
@@ -17,5 +19,5 @@
     </div>
     <div class="rte-area rich field" contenteditable="true" role="textbox" aria-multiline="true" aria-label="{{ $label }}" hidden></div>
     <textarea class="field rte-source" id="{{ $id }}" name="{{ $name }}" rows="12">{{ $value }}</textarea>
-    <p class="hint">Bold, italic, underline, links, lists and lines only. Anything else pasted in is dropped.</p>
+    <p class="hint">Headings, bold, italic, underline, links, lists and lines only. Anything else pasted in is dropped.</p>
 </div>

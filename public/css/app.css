@@ -294,12 +294,17 @@ tr .nm { font-weight: 500; }
 .rich > :last-child { margin-bottom: 0; }
 .rich ul, .rich ol { margin: 0 0 1em; padding-left: 1.4em; }
 .rich li { margin: .25em 0; }
+/* A list straight after a paragraph usually belongs to it ("Match timed at 15 minutes:"), so sit closer */
+.rich p + ul, .rich p + ol { margin-top: -.55em; }
+.rich h2 { margin: 1.5em 0 .4em; font-family: var(--font-cond); font-weight: 700; font-size: 30px; line-height: 1.05; }
+.rich h3 { margin: 1.3em 0 .3em; font-size: 20px; font-weight: 700; line-height: 1.25; }
+.rich > :first-child { margin-top: 0; }
 .rich hr { border: 0; border-top: 1px solid var(--line-strong); margin: 1.6em 0; }
 .rich a { color: var(--link); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
 .rich a:hover { color: var(--link); text-decoration-style: dotted; }
 .rich u { text-decoration-thickness: 1px; text-underline-offset: 3px; } /* plain underlining stays the text colour, so a link is the only coloured text */
 
-.rte-toolbar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.rte-toolbar { display: flex; flex-wrap: wrap; gap: 6px; position: sticky; top: 0; z-index: 10; padding: 8px 0; margin-bottom: 0; background: var(--bg); } /* stays in view while a long text is scrolled */
 .rte-toolbar[hidden], .rte-area[hidden], .rte-source[hidden] { display: none; }
 .rte-toolbar button { min-height: 40px; min-width: 44px; padding: 0 12px; background: var(--field-bg); color: var(--fg); border: 1px solid var(--btn-border); border-radius: 3px; font-weight: 600; cursor: pointer; }
 .rte-toolbar button:hover { border-color: var(--fg); }
